@@ -29,6 +29,7 @@
 *.dylib
 
 # Executables
+lemipc
 *.exe
 *.out
 *.app
