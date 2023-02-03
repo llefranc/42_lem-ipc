@@ -5,15 +5,12 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/01/30 11:53:26 by llefranc          #+#    #+#             */
-/*   Updated: 2023/01/31 12:16:53 by llefranc         ###   ########.fr       */
+/*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
+/*   Updated: 2023/02/03 14:52:21 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdio.h>
-#include <string.h>
 
 int main(void) {
-    printf("%zu\n", strlen("hello\n"));
-    return 3;
+	return 0;
 }
