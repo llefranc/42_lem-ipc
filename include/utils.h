@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:47:22 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/03 14:40:54 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/02/03 18:42:27 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,77 +21,65 @@
 #define log_verb(msg) d_log_verb(__LINE__, __FILE__, (msg))
 #define log_info(msg) d_log_info(__LINE__, __FILE__, (msg))
 #define log_warn(msg) d_log_warn(__LINE__, __FILE__, (msg))
-#define log_err(msg, ret) d_log_err(__LINE__, __FILE__, (msg), (ret))
-#define log_syserr(msg, ret) d_log_syserr(__LINE__, __FILE__, (msg), (ret))
+#define log_err(msg) d_log_err(__LINE__, __FILE__, (msg))
+#define log_syserr(msg) d_log_syserr(__LINE__, __FILE__, (msg))
 
-static inline int d_log_verb(int line, const char *file, const char *msg)
+static inline void d_log_verb(int line, const char *file, const char *msg)
 {
-	printf("\033[0;34m[ VERB  ]\033[0m (%s:%d) %s", file, line, msg);
-	return 0;
+	printf("\033[0;34m[ VERB  ]\033[0m (%s:%d) %s\n", file, line, msg);
 }
 
-static inline int d_log_info(int line, const char *file, const char* msg)
+static inline void d_log_info(int line, const char *file, const char* msg)
 {
-	printf("\033[0;37m[ INFO  ]\033[0m (%s:%d) %s", file, line, msg);
-	return 0;
+	printf("[ INFO  ] (%s:%d) %s\n", file, line, msg);
 }
 
-static inline int d_log_warn(int line, const char *file, const char *msg)
+static inline void d_log_warn(int line, const char *file, const char *msg)
 {
-	printf("\033[0;33m[ WARN  ]\033[0m (%s:%d) %s", file, line, msg);
-	return 0;
+	printf("\033[0;33m[ WARN  ]\033[0m (%s:%d) %s\n", file, line, msg);
 }
 
-static inline int d_log_err(int line, const char *file, const char *msg,
-		int ret)
+static inline void d_log_err(int line, const char *file, const char *msg)
 {
-	fprintf(stderr, "\033[0;31m[ ERROR ]\033[0m (%s:%d) %s", file,
+	fprintf(stderr, "\033[0;31m[ ERROR ]\033[0m (%s:%d) %s\n", file,
 			line, msg);
-	return ret;
 }
 
-static inline int d_log_syserr(int line, const char *file, const char *msg,
-		int ret)
+static inline void d_log_syserr(int line, const char *file, const char *msg)
 {
 	char *p;
 
 	p = strerror(errno);
-	fprintf(stderr, "\033[0;31m[ ERROR ]\033[0m (%s:%d) %s %s", file,
+	fprintf(stderr, "\033[0;31m[ ERROR ]\033[0m (%s:%d) %s %s\n", file,
 			line, p, msg);
-	return ret;
 }
 #else
-static inline int log_verb(const char *msg)
+static inline void log_verb(const char *msg)
 {
 	(void)msg;
-	return 0;
 }
 
-static inline int log_info(const char* msg)
+static inline void log_info(const char* msg)
 {
-	printf("\033[0;37m[ INFO  ]\033[0m %s", msg);
-	return 0;
+	printf("[ INFO  ] %s\n", msg);
 }
 
-static inline int log_warn(const char *msg)
+static inline void log_warn(const char *msg)
 {
-	printf("\033[0;33m[ WARN  ]\033[0m %s", msg);
-	return 0;
+	printf("\033[0;33m[ WARN  ]\033[0m %s\n", msg);
 }
 
-static inline int log_err(const char *msg, int ret)
+static inline void log_err(const char *msg)
 {
-	fprintf(stderr, "\033[0;31m[ ERROR ]\033[0m %s", msg);
-	return ret;
+	fprintf(stderr, "\033[0;31m[ ERROR ]\033[0m %s\n", msg);
 }
 
-static inline int log_syserr(const char *msg, int ret)
+static inline void log_syserr(const char *msg)
 {
 	char *p;
 
 	p = strerror(errno);
-	fprintf(stderr, "\033[0;31m[ ERROR ]\033[0m %s %s", p, msg);
-	return ret;
+	fprintf(stderr, "\033[0;31m[ ERROR ]\033[0m %s %s\n", p, msg);
 }
 #endif /* DEBUG */
 

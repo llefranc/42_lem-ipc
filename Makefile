@@ -6,34 +6,37 @@
 #    By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/01/30 11:53:43 by llefranc          #+#    #+#              #
-#    Updated: 2023/02/03 14:51:29 by llefranc         ###   ########.fr        #
+#    Updated: 2023/02/03 18:40:44 by llefranc         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME		=	lemipc
 CC		=	gcc
-FLAGS_PROD	=	-O2 -Wall -Werror -Wextra
+FLAGS		=	-O2 -Wall -Werror -Wextra
 FLAGS_DEBUG	=	-g -fsanitize=address -Wall -Werror -Wextra -DDEBUG
 
-SRCS		=	main.c
+SRCS		=	main.c sem_shm.c
 PATH_SRCS	=	src/
 OBJS		=	$(SRCS:.c=.o)
 
-all	:	$(NAME)
+all		:	$(NAME)
 
-$(NAME)	:	$(addprefix $(PATH_SRCS), $(OBJS))
-			$(CC) -o $(NAME) $(FLAGS_DEBUG) $(addprefix $(PATH_SRCS), $(OBJS))
+debug		:	FLAGS = $(FLAGS_DEBUG)
+debug		:	re
 
-clean	:
-		rm -rf $(addprefix $(PATH_SRCS), $(OBJS))
+$(NAME)		:	$(addprefix $(PATH_SRCS), $(OBJS))
+				$(CC) -o $(NAME) $(FLAGS) $(addprefix $(PATH_SRCS), $(OBJS))
 
-fclean	:	clean
-			rm -rf $(NAME)
+clean		:
+			rm -rf $(addprefix $(PATH_SRCS), $(OBJS))
 
-re	:	fclean all
+fclean		:	clean
+				rm -rf $(NAME)
 
-.PHONY	:	all clean fclean re
+re		:	fclean all
+
+.PHONY		:	all clean fclean re debug
 
 #compiling .o with flags
 $(PATH_SRCS)%.o	:	$(PATH_SRCS)%.c
-			$(CC) $(FLAGS_DEBUG) -o $@ -c $<
+			$(CC) $(FLAGS) -o $@ -c $<
