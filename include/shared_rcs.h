@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:39:35 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/28 14:28:09 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/02/28 15:56:50 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,9 @@
 
 #include <sys/types.h>
 #include <sys/ipc.h>
+#include <sys/sem.h>
+
+#include "../include/utils.h"
 
 enum clean_step {
 	E_CLEAN_SHM,
@@ -32,7 +35,28 @@ struct shrcs {
 
 key_t keygen(int i);
 int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize);
+int init_shared_rcs(const struct shrcs *rcs);
 int get_shm_nattch(int shm_id);
-int clean_shared_rcs(struct shrcs *p, enum clean_step step);
+int clean_shared_rcs(const struct shrcs *rcs, enum clean_step step);
+
+static inline int sem_lock(int sem_id)
+{
+	int ret;
+	struct sembuf b = { .sem_op = -1 };
+
+	if ((ret = semop(sem_id, &b, 1)) == -1)
+		log_syserr("(semop -1)");
+	return ret;
+}
+
+static inline int sem_unlock(int sem_id)
+{
+	int ret;
+	struct sembuf b = { .sem_op = 1 };
+
+	if ((ret = semop(sem_id, &b, 1)) == -1)
+		log_syserr("(semop 1)");
+	return ret;
+}
 
 #endif /* SHARED_RCS */

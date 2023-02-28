@@ -6,18 +6,15 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:42:47 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/28 14:32:56 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/02/28 15:55:59 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <unistd.h>
 #include <sys/msg.h>
 #include <sys/shm.h>
-#include <sys/sem.h>
 
 #include "../include/shared_rcs.h"
-
-#include "../include/utils.h"
 
 static inline int clean_shm(int shm_id);
 static inline int clean_sem(int sem_id);
@@ -61,6 +58,31 @@ int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize)
 	return 0;
 }
 
+int init_shared_rcs(const struct shrcs *rcs)
+{
+	struct semid_ds b = {};
+	union semun {
+		int val;
+		struct semid_ds *buf;
+		unsigned short *array;
+		struct seminfo *__buf;
+	} tmp = { .buf = &b };
+
+	if (semctl(rcs->sem_id, 0, IPC_STAT, tmp) == -1) {
+		log_syserr("(semctl - IPC_STAT)");
+		return -1;
+	}
+	if (b.sem_otime == 0) { /* To avoid data races for init */
+		tmp.val = 1;
+		if (semctl(rcs->sem_id, 0, SETVAL, tmp) == -1) {
+			log_syserr("(semctl - SETVAL)");
+			return -1;
+		}
+	}
+	log_verb("Semaphore initialized to 1");
+	return 0;
+}
+
 int get_shm_nattch(int shm_id)
 {
 	struct shmid_ds buf = {};
@@ -74,7 +96,7 @@ int get_shm_nattch(int shm_id)
 
 static inline int clean_shm(int shm_id)
 {
-	int ret = 0;
+	int ret;
 
 	if ((ret = shmctl(shm_id, IPC_RMID, NULL)) == -1)
 		log_syserr("(shmctl - IPC_RMID)");
@@ -85,7 +107,7 @@ static inline int clean_shm(int shm_id)
 
 static inline int clean_sem(int sem_id)
 {
-	int ret = 0;
+	int ret;
 
 	if ((ret = semctl(sem_id, 0, IPC_RMID)) == -1)
 		log_syserr("(semctl - IPC_RMID)");
@@ -96,7 +118,7 @@ static inline int clean_sem(int sem_id)
 
 static inline int clean_msgq(int msgq_id)
 {
-	int ret = 0;
+	int ret;
 
 	if ((ret = msgctl(msgq_id, IPC_RMID, NULL)) == -1)
 		log_syserr("(msgctl - IPC_RMID)");
@@ -105,7 +127,7 @@ static inline int clean_msgq(int msgq_id)
 	return ret;
 }
 
-int clean_shared_rcs(struct shrcs *rcs, enum clean_step step)
+int clean_shared_rcs(const struct shrcs *rcs, enum clean_step step)
 {
 	int ret = 0;
 	int nbattch;
