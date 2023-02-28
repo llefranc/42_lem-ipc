@@ -6,21 +6,66 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/28 15:42:37 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/02/28 19:36:22 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#include <sys/ipc.h>
+#include <signal.h>
+#include <stdlib.h>
 
 #include "../include/shared_rcs.h"
 #include "../include/game.h"
 
-#include <sys/ipc.h>
+static _Bool is_sig_received = 0;
+
+static void sighandler(int signum)
+{
+	(void)signum;
+	is_sig_received = 1;
+}
+
+static inline int setup_sighandlers(void)
+{
+	int sigs[1] = { SIGINT };
+
+	for (size_t i = 0; i < sizeof(sigs) / sizeof(*sigs); ++i) {
+		if (signal(SIGINT, sighandler) == SIG_ERR) {
+			log_syserr("(signal)");
+			return -1;
+		}
+	}
+	return 0;
+}
+
+static inline int parse_team_nb(int ac, char **av)
+{
+	long team_nb = 0;
+	char *p = NULL;
+
+	if (ac != 2) {
+		log_err("Enter only the team number as argument");
+		return -1;
+	}
+	errno = 0;
+	team_nb = strtol(av[1], &p, 10);
+	if (errno == ERANGE || (team_nb < 1 || team_nb > 9) || *p != '\0') {
+		log_err("Team number must be a number between 1 and 9");
+		return -1;
+	}
+	return (int)team_nb;
+}
 
 int main(int ac, char **av)
 {
-	(void)ac;
-	(void)av;
 	key_t key;
+	int team_nb;
 	struct shrcs rcs = {};
+
+	if ((team_nb = parse_team_nb(ac, av)) == -1)
+		return 1;
+	if (setup_sighandlers() == -1)
+		return 1;
 
 	if ((key = keygen(1)) == -1)
 		return 1;
