@@ -1,28 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   game.h                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/28 13:44:07 by llefranc         ###   ########.fr       */
+/*   Created: 2023/02/27 18:28:07 by llefranc          #+#    #+#             */
+/*   Updated: 2023/02/27 18:28:36 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/shared_rcs.h"
-#include "../include/game.h"
+#ifndef GAME_H
+#define GAME_H
 
-int main(int ac, char **av)
-{
-	(void)ac;
-	(void)av;
-	key_t key;
-	struct shrcs rcs = {};
+#define NB_PLAYERS_MAX 10
+#define MAP_SIZE 100
 
-	if ((key = keygen(1)) == -1)
-		return 1;
-	if (get_shared_rcs(&rcs, key,sizeof (struct mapinfo)) == -1)
-		return 1;
-	return 0;
-}
+struct mapinfo {
+	int nbp;
+	char nbp_team[NB_PLAYERS_MAX];
+	int map[MAP_SIZE];
+};
+
+#endif /* GAME_H */

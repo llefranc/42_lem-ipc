@@ -1,28 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   shared_rcs.h                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/28 13:44:07 by llefranc         ###   ########.fr       */
+/*   Created: 2023/02/27 17:39:35 by llefranc          #+#    #+#             */
+/*   Updated: 2023/02/27 18:30:13 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/shared_rcs.h"
-#include "../include/game.h"
+#ifndef SHARED_RCS
+#define SHARED_RCS
 
-int main(int ac, char **av)
-{
-	(void)ac;
-	(void)av;
-	key_t key;
-	struct shrcs rcs = {};
+#include <sys/types.h>
 
-	if ((key = keygen(1)) == -1)
-		return 1;
-	if (get_shared_rcs(&rcs, key,sizeof (struct mapinfo)) == -1)
-		return 1;
-	return 0;
-}
+enum clean_step {
+	E_CLEAN_SHM,
+	E_CLEAN_SHM_SEM,
+	E_CLEAN_ALL,
+};
+
+struct shrcs {
+	int shm_id;
+	int sem_id;
+	int msg_id;
+	size_t shm_size;
+	char *shm_addr;
+};
+
+key_t keygen(int i);
+int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize);
+
+#endif /* SHARED_RCS */
