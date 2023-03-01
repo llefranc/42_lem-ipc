@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:42:47 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/28 15:55:59 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/01 17:13:24 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,13 @@ static inline int clean_shm(int shm_id);
 static inline int clean_sem(int sem_id);
 static inline int clean_msgq(int msqg_id);
 
+/**
+ * keygen() - Generates a System V key.
+ * @i: To generates different key if needed (need to be incremented it each
+ *     time a new key is needed).
+ *
+ * Return: The System V key on success, -1 on error.
+*/
 key_t keygen(int i)
 {
 	key_t key;
@@ -34,6 +41,20 @@ key_t keygen(int i)
 	return key;
 }
 
+/**
+ * get_shared_rcs() - Gets or creates all System V ressources.
+ * @rcs: Contains all information of System V shared ressources.
+ * @key: System V key to access shm/sem/msgq.
+ * @shmsize: The size of the shared memory segment.
+ *
+ * 1. Creates or gets if already existing a shared memory segment and attaches
+ *    it to the current process.
+ * 2. Creates or gets if already existing a semaphore set of 1 semaphore.
+ * 3. Creates or gets if already existing a message queue.
+ *
+ * Return: 0 on success, -1 on failure. If failure, cleans automatically all
+ *         shared ressources.
+*/
 int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize)
 {
 	if ((rcs->shm_id = shmget(key, shmsize, IPC_CREAT | 0600)) == -1) {
@@ -58,6 +79,16 @@ int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize)
 	return 0;
 }
 
+/**
+ * init_shared_rcs() - Initializes the System V shared ressources.
+ * @rcs: Contains all information of System V shared ressources.
+ *
+ * Initializes the only semaphore of the semaphore set to value 1. Doesn't
+ * initializes the shared memory segment because it is automatically memset to 0
+ * during its creation.
+ *
+ * Return: 0 on success, -1 on failure.
+*/
 int init_shared_rcs(const struct shrcs *rcs)
 {
 	struct semid_ds b = {};
@@ -127,6 +158,15 @@ static inline int clean_msgq(int msgq_id)
 	return ret;
 }
 
+/**
+ * clean_shared_rcs() - Cleans all the System V shared ressources.
+ * @rcs: Contains all information of System V shared ressources.
+ * @step: Indicates which System V ressources need to be destroyed. Can be
+ *        either one of E_CLEAN_ALL, E_CLEAN_SHM_SEM or E_CLEAN_SHM.
+ *
+ * Return: 0 on success, a negative number if one or several clean operations
+ *         failed.
+*/
 int clean_shared_rcs(const struct shrcs *rcs, enum clean_step step)
 {
 	int ret = 0;
