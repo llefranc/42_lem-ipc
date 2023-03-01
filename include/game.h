@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 18:28:07 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/28 18:32:18 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/01 12:02:53 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,12 +18,27 @@
 #define MAP_NB_ROWS 10
 #define MAP_NB_COLUMNS 10
 
+#include <time.h>
+
+struct pos {
+	int row;
+	int col;
+};
 struct mapinfo {
-	int nbp;
-	char nbp_team[NB_TEAMS_MAX];
-	int map[MAP_NB_ROWS][MAP_NB_COLUMNS];
+	unsigned int nbp;
+	unsigned char nbp_team[NB_TEAMS_MAX];
+	unsigned int map[MAP_NB_ROWS][MAP_NB_COLUMNS];
+};
+
+struct player {
+	unsigned int id;
+	unsigned int team_id;
+	unsigned int target_id;
+	struct pos p;
+	time_t last_move;
 };
 
 int print_map(const struct mapinfo *m);
+struct pos find_player_pos(const struct mapinfo *m, unsigned int id);
 
 #endif /* GAME_H */

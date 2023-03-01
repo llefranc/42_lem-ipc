@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/28 16:06:56 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/28 18:53:05 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/01 12:02:47 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,4 +52,20 @@ int print_map(const struct mapinfo *m)
 
 	is_map_printed = 1;
 	return 0;
+}
+
+struct pos find_player_pos(const struct mapinfo *m, unsigned int id)
+{
+	struct pos p = { .row = -1, .col = -1};
+
+	for (int row = 0; row < MAP_NB_ROWS; ++row) {
+		for (int col = 0; col < MAP_NB_COLUMNS; ++col) {
+			if (m->map[row][col] == id) {
+				p.row = row;
+				p.col = col;
+				return p;
+			}
+		}
+	}
+	return p;
 }
