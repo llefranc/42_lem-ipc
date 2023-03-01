@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:39:35 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/28 15:56:50 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/01 15:04:19 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,11 +33,10 @@ struct shrcs {
 	char *shm_addr;
 };
 
-key_t keygen(int i);
-int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize);
-int init_shared_rcs(const struct shrcs *rcs);
-int get_shm_nattch(int shm_id);
-int clean_shared_rcs(const struct shrcs *rcs, enum clean_step step);
+struct msgbuf {
+	long team_id;
+	char targ_id[4];
+};
 
 static inline int sem_lock(int sem_id)
 {
@@ -58,5 +57,11 @@ static inline int sem_unlock(int sem_id)
 		log_syserr("(semop 1)");
 	return ret;
 }
+
+key_t keygen(int i);
+int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize);
+int init_shared_rcs(const struct shrcs *rcs);
+int get_shm_nattch(int shm_id);
+int clean_shared_rcs(const struct shrcs *rcs, enum clean_step step);
 
 #endif /* SHARED_RCS */

@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 18:28:07 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/01 12:02:53 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/01 14:59:57 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,9 @@
 
 #include <time.h>
 
-struct pos {
+#include "../include/shared_rcs.h"
+
+struct position {
 	int row;
 	int col;
 };
@@ -33,12 +35,15 @@ struct mapinfo {
 struct player {
 	unsigned int id;
 	unsigned int team_id;
-	unsigned int target_id;
-	struct pos p;
+	unsigned int targ_id;
+	struct position pos;
 	time_t last_move;
 };
 
+
 int print_map(const struct mapinfo *m);
-struct pos find_player_pos(const struct mapinfo *m, unsigned int id);
+struct position find_player_pos(const struct mapinfo *m, unsigned int id);
+int find_new_target(const struct shrcs *rcs, const struct mapinfo *m,
+		const struct player *p);
 
 #endif /* GAME_H */

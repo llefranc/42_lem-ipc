@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/28 19:36:22 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/01 15:11:42 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,9 +38,9 @@ static inline int setup_sighandlers(void)
 	return 0;
 }
 
-static inline int parse_team_nb(int ac, char **av)
+static inline int parse_team_id(int ac, char **av)
 {
-	long team_nb = 0;
+	long team_id = 0;
 	char *p = NULL;
 
 	if (ac != 2) {
@@ -48,21 +48,21 @@ static inline int parse_team_nb(int ac, char **av)
 		return -1;
 	}
 	errno = 0;
-	team_nb = strtol(av[1], &p, 10);
-	if (errno == ERANGE || (team_nb < 1 || team_nb > 9) || *p != '\0') {
+	team_id = strtol(av[1], &p, 10);
+	if (errno == ERANGE || (team_id < 1 || team_id > 9) || *p != '\0') {
 		log_err("Team number must be a number between 1 and 9");
 		return -1;
 	}
-	return (int)team_nb;
+	return (int)team_id;
 }
 
 int main(int ac, char **av)
 {
 	key_t key;
-	int team_nb;
+	int team_id;
 	struct shrcs rcs = {};
 
-	if ((team_nb = parse_team_nb(ac, av)) == -1)
+	if ((team_id = parse_team_id(ac, av)) == -1)
 		return 1;
 	if (setup_sighandlers() == -1)
 		return 1;
