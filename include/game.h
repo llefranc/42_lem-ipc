@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 18:28:07 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 13:07:38 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/02 15:43:52 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,36 @@ struct player {
 	time_t last_move;
 };
 
+/**
+ * get_mates_nb() - Gets the number of players in the player team.
+ * @team_id: The team id of the player (lemipc arg, between 1 and 9).
+ * @play_id: The id of a player resulting in the combination of its personnal id
+ *           and its team id (3 bytes for player id, 1 byte for team id).
+ *
+ * Return: The number of players in the player team (actual player include).
+*/
+static inline int get_mates_nb(const struct mapinfo *m, const struct player *p)
+{
+	return m->nbp_team[p->team_id - 1];
+}
+
+/**
+ * is_in_team() - Indicates if a player id belongs to a team or not.
+ * @team_id: The team id of the player (lemipc arg, between 1 and 9).
+ * @play_id: The id of a player resulting in the combination of its personnal id
+ *           and its team id (3 bytes for player id, 1 byte for team id).
+ *
+ * Return: 1 if the player belongs to the team, 0 otherwise.
+*/
+static inline _Bool is_in_team(unsigned int play_id, unsigned int team_id)
+{
+	return (unsigned char)play_id == (unsigned char)team_id;
+}
+
 void print_map(const struct mapinfo *m);
-int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p);
+int send_targ_id(int msgq_id, unsigned int team_id, unsigned int targ_id);
+int find_new_target(const struct shrcs *rcs, const struct mapinfo *m,
+		const struct player *p);
+struct position find_player_pos(const struct mapinfo *m, unsigned int id);
 
 #endif /* GAME_H */

@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 14:25:15 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/02 15:29:13 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 
 #include "../include/shared_rcs.h"
 #include "../include/game.h"
+#include "../include/spawn.h"
 
 static _Bool is_sig_received = 0;
 
