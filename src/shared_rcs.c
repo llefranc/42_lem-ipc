@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:42:47 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/01 17:13:24 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/02 11:43:59 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,7 @@ int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize)
 		clean_shared_rcs(rcs, E_CLEAN_SHM_SEM);
 		return -1;
 	}
+	log_verb("Shared ressources succesfully get");
 	return 0;
 }
 

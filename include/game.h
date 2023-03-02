@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 18:28:07 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/01 16:41:01 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/02 13:07:38 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,10 +65,7 @@ struct player {
 	time_t last_move;
 };
 
-
 void print_map(const struct mapinfo *m);
-struct position find_player_pos(const struct mapinfo *m, unsigned int id);
-int find_new_target(const struct shrcs *rcs, const struct mapinfo *m,
-		const struct player *p);
+int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p);
 
 #endif /* GAME_H */
