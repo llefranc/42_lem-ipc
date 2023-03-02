@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/28 16:06:56 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 13:45:56 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/02 14:23:46 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,6 @@
 
 #include "../include/utils.h"
 #include "../include/shared_rcs.h"
-
-static inline _Bool is_tmate(int team_id, int play_id);
 
 /**
  * print_map() - Refreshes the terminal with a representation of the game map.
@@ -311,7 +309,7 @@ static struct position find_spawn_pos(struct mapinfo *m, unsigned int team_id)
 }
 
 static inline int spawn_update_player(const struct mapinfo *m, struct player *p,
-		const struct position *pos, unsigned int new_targ)
+		unsigned int new_targ)
 {
 	if ((p->last_move = time(NULL)) == ((time_t) -1)) {
 		log_syserr("(time)");
@@ -319,16 +317,14 @@ static inline int spawn_update_player(const struct mapinfo *m, struct player *p,
 	}
 	p->id = p->team_id + (m->nbp << 8); /* team_id 1 byte, play_id 3 bytes */
 	p->targ_id = new_targ;
-	p->pos = *pos;
 	return 0;
 }
 
-static inline void spawn_update_map(struct mapinfo *m,
-		const struct player *p, const struct position *pos)
+static inline void spawn_update_map(struct mapinfo *m, const struct player *p)
 {
 	m->nbp++;
 	m->nbp_team[p->team_id - 1]++;
-	m->map[pos->row][pos->col] = p->id;
+	m->map[p->pos.row][p->pos.col] = p->id;
 }
 
 /**
@@ -351,7 +347,6 @@ static inline void spawn_update_map(struct mapinfo *m,
 int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
 	int new_targ;
-	struct position pos;
 
 	if (sem_lock(rcs->sem_id) == -1)
 		return -1;
@@ -360,8 +355,8 @@ int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 		log_err("Too many players in this team");
 		goto err_unlock_sem;
 	}
-	pos = find_spawn_pos(m, p->team_id);
-	if (pos.row == -1) {
+	p->pos = find_spawn_pos(m, p->team_id);
+	if (p->pos.row == -1) {
 		log_err("No spawn position available");
 		goto err_unlock_sem;
 	}
@@ -374,15 +369,14 @@ int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 			(unsigned int)new_targ) == -1)
 		goto err_unlock_sem;
 
-
-	if (spawn_update_player(m, p, &pos, (unsigned int)new_targ) == -1)
+	if (spawn_update_player(m, p, (unsigned int)new_targ) == -1)
 		goto err_unlock_sem;
-	spawn_update_map(m, p, &pos);
+	spawn_update_map(m, p);
 
 	if (sem_unlock(rcs->sem_id) == -1)
 		return -1;
-	printf("[ INFO  ] Player spawned (row %d, col %d)\n", pos.row + 1,
-			pos.col + 1);
+	printf("[ INFO  ] Player spawned (row %d, col %d)\n", p->pos.row + 1,
+			p->pos.col + 1);
 	return 0;
 
 err_unlock_sem:

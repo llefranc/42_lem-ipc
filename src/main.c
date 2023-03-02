@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 12:56:26 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/02 14:25:15 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,7 @@ int main(int ac, char **av)
 	key_t key;
 	int team_id;
 	struct shrcs rcs = {};
-	struct mapinfo m = {};
+	struct mapinfo *m;
 	struct player p = {};
 
 	if (setup_sighandlers() == -1)
@@ -76,12 +76,13 @@ int main(int ac, char **av)
 	if (init_shared_rcs(&rcs) == -1)
 		goto fatal_err_clean_all_rcs;
 
+	m = (struct mapinfo *)rcs.shm_addr;
 	p.team_id = (unsigned int)team_id;
-	if (spawn_player(&rcs, &m, &p) == -1) {
-		print_map(&m);
+	if (spawn_player(&rcs, m, &p) == -1) {
+		print_map(m);
 		goto fatal_err_clean_all_rcs;
 	}
-	print_map(&m);
+	print_map(m);
 
 	if (clean_shared_rcs(&rcs, E_CLEAN_ALL) < 0)
 		return 1;
