@@ -40,6 +40,8 @@ struct position {
 
 /**
  * struct mapinfo - Contains all the map information.
+ * @start_time: The time at which the first process joined the game (either in
+ *              player mode or graphic mode).
  * @nbp: The number of player which joined the game since it started.
  * @nbp_team: The number of players per team actually playing.
  * @map: The game map containing all the players.
@@ -48,6 +50,7 @@ struct position {
  * each process to be able to see the actual game state and interact with it.
 */
 struct mapinfo {
+	time_t start_time;
 	unsigned int nbp;
 	unsigned char nbp_team[NB_TEAMS_MAX];
 	unsigned int map[MAP_NB_ROWS][MAP_NB_COLUMNS];
@@ -124,5 +127,7 @@ int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,
 		struct player *p);
 struct position find_player_pos(const struct mapinfo *m, unsigned int id);
 int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p);
+int nb_teams_in_game(const struct mapinfo *m);
+int get_winner(const struct mapinfo *m);
 
 #endif /* GAME_UTILS_H */

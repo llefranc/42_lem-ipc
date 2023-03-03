@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/28 16:06:56 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 12:11:07 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 13:47:27 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -254,4 +254,24 @@ struct position find_player_pos(const struct mapinfo *m, unsigned int id)
 		}
 	}
 	return p;
+}
+
+int nb_teams_in_game(const struct mapinfo *m)
+{
+	int nb = 0;
+
+	for (int team_id = 0; team_id < NB_TEAMS_MAX; ++team_id) {
+		if (m->nbp_team[team_id])
+			++nb;
+	}
+	return nb;
+}
+
+int get_winner(const struct mapinfo *m)
+{
+	for (int team_id = 0; team_id < NB_TEAMS_MAX; ++team_id) {
+		if (m->nbp_team[team_id])
+			return team_id + 1;
+	}
+	return 0;
 }
