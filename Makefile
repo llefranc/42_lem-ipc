@@ -6,7 +6,7 @@
 #    By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/01/30 11:53:43 by llefranc          #+#    #+#              #
-#    Updated: 2023/03/02 15:29:02 by llefranc         ###   ########.fr        #
+#    Updated: 2023/03/03 09:19:20 by llefranc         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ CC		=	gcc
 FLAGS		=	-O2 -Wall -Werror -Wextra
 FLAGS_DEBUG	=	-g -fsanitize=address -Wall -Werror -Wextra -DDEBUG
 
-SRCS		=	main.c shared_rcs.c game.c spawn.c
+SRCS		=	main.c shared_rcs.c game_utils.c spawn_player.c
 PATH_SRCS	=	src/
 OBJS		=	$(SRCS:.c=.o)
 
