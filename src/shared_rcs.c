@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:42:47 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 10:28:31 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 14:55:39 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,11 @@
 #include <sys/shm.h>
 
 #include "../include/shared_rcs.h"
+#include "../include/game_utils.h"
 
 /**
  * keygen() - Generates a System V key.
- * @i: To generates different key if needed (need to be incremented it each
+ * @i: To generates different key if needed (need to be incremented each
  *     time a new key is needed).
  *
  * Return: The System V key on success, -1 on error.
@@ -109,17 +110,34 @@ int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize)
 	return 0;
 }
 
+static inline int set_start_time(struct shrcs *rcs, struct mapinfo *m)
+{
+	time_t t;
+
+	if ((t = time(NULL)) == ((time_t) -1)) {
+		log_syserr("(time)");
+		return -1;
+	}
+	if (sem_lock(rcs->sem_id) == -1)
+		return -1;
+	m = (struct mapinfo *)rcs->shm_addr;
+	m->start_time = t;
+	if (sem_unlock(rcs->sem_id) == -1)
+		return -1;
+	return 0;
+}
+
 /**
  * init_shared_rcs() - Initializes the System V shared ressources.
  * @rcs: Contains all information of System V shared ressources.
  *
- * Initializes the only semaphore of the semaphore set to value 1. Doesn't
- * initializes the shared memory segment because it is automatically memset to 0
- * during its creation.
+ * Initializes the only semaphore of the semaphore set to value 1.
+ * Initializes start time value in the shared memory segment with actual time.
+ * The others bytes of shared memory segment are automatically set to 0.
  *
  * Return: 0 on success, -1 on failure.
 */
-int init_shared_rcs(const struct shrcs *rcs)
+int init_shared_rcs(struct shrcs *rcs, struct mapinfo **m)
 {
 	struct semid_ds b = {};
 	union semun {
@@ -129,6 +147,7 @@ int init_shared_rcs(const struct shrcs *rcs)
 		struct seminfo *__buf;
 	} tmp = { .buf = &b };
 
+	*m = (struct mapinfo *)rcs->shm_addr;
 	if (semctl(rcs->sem_id, 0, IPC_STAT, tmp) == -1) {
 		log_syserr("(semctl - IPC_STAT)");
 		return -1;
@@ -139,6 +158,8 @@ int init_shared_rcs(const struct shrcs *rcs)
 			log_syserr("(semctl - SETVAL)");
 			return -1;
 		}
+		if (set_start_time(rcs, *m) == -1)
+			return -1;
 	}
 	log_verb("Semaphore initialized to 1");
 	return 0;
@@ -161,6 +182,9 @@ int get_shm_nattch(int shm_id)
  * @step: Indicates which System V ressources need to be destroyed. Can be
  *        either one of E_CLEAN_ALL, E_CLEAN_SHM_SEM or E_CLEAN_SHM.
  *
+ * Detaches the process from the shared memory segment and destroys the shared
+ * ressources if it was the last attached process.
+ *
  * Return: 0 on success, a negative number if one or several clean operations
  *         failed.
 */
@@ -169,9 +193,13 @@ int clean_shared_rcs(const struct shrcs *rcs, enum clean_step step)
 	int ret = 0;
 	int nbattch;
 
+	if (shmdt(rcs->shm_addr)) {
+		log_syserr("(shmdt)");
+		ret--;
+	}
 	if ((nbattch = get_shm_nattch(rcs->shm_id)) == -1)
 		return -1;
-	if (nbattch == 1) {
+	if (!nbattch) {
 		switch (step) {
 		case E_CLEAN_ALL:
 			ret += clean_msgq(rcs->msgq_id);

@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 13:51:56 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 15:44:05 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,12 +60,57 @@ static inline int parse_team_id(int ac, char **av)
 	return (int)team_id;
 }
 
+static inline int wait_for_players(const struct shrcs *rcs,
+		const struct mapinfo *m)
+{
+	time_t now;
+	time_t tmp;
+	time_t time_since_start = SEC_START_TIME;
+	time_t start_time;
+
+	if (sem_lock(rcs->sem_id) == -1)
+		return -1;
+	start_time = m->start_time;
+	if (sem_unlock(rcs->sem_id) == -1)
+		return -1;
+
+	if ((now = time(NULL)) == ((time_t) -1)) {
+		log_syserr("(time)");
+		return -1;
+	}
+	if (now - start_time > SEC_START_TIME) {
+		log_info("Game has already started, impossible to join");
+		return 0;
+	}
+	printf("[ INFO  ] Waiting for players to join, game will start in ");
+	fflush(stdout);
+	do {
+		tmp = now - start_time;
+		if (tmp != time_since_start) {
+			time_since_start = tmp;
+			printf("%ld... ", SEC_START_TIME - time_since_start);
+			fflush(stdout);
+		}
+		if ((now = time(NULL)) == ((time_t) -1)) {
+			log_syserr("(time)");
+			return -1;
+		}
+	}
+	while (time_since_start < SEC_START_TIME);
+	printf("\n");
+	return 1;
+}
+
 
 int graphic_mode(const struct shrcs *rcs, const struct mapinfo *m)
 {
+	int ret;
 	int still_playing = 0;
 
 	log_info("Graphic mode started");
+	if ((ret = wait_for_players(rcs, m)) < 1)
+		return ret;
+
 	do {
 		if (sem_lock(rcs->sem_id) == -1)
 			return -1;
@@ -91,13 +136,15 @@ int graphic_mode(const struct shrcs *rcs, const struct mapinfo *m)
 
 int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
+	int ret;
+
 	if (spawn_player(rcs, m, p) == -1)
 		return -1;
+	if ((ret = wait_for_players(rcs, m)) < 1)
+		return ret;
 	return 0;
 }
 
-#include <unistd.h>
-#include <stdio.h>
 int main(int ac, char **av)
 {
 	key_t key;
@@ -115,12 +162,10 @@ int main(int ac, char **av)
 		return 1;
 	if (get_shared_rcs(&rcs, key, sizeof(struct mapinfo)) == -1)
 		return 1;
-	if (init_shared_rcs(&rcs) == -1)
+	if (init_shared_rcs(&rcs, &m) == -1)
 		goto fatal_err_clean_all_rcs;
 
-	m = (struct mapinfo *)rcs.shm_addr;
 	p.team_id = (unsigned int)team_id;
-
 	if (!team_id) {
 		if (graphic_mode(&rcs, m) == -1)
 			goto fatal_err_clean_all_rcs;

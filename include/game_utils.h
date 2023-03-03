@@ -17,10 +17,13 @@
 #define NB_TEAMS_MAX 7 /* because 7 ascii colors */
 #define MAP_NB_ROWS 5
 #define MAP_NB_COLUMNS 5
+#define SEC_START_TIME 10
 
 #include <time.h>
 
 #include "../include/shared_rcs.h"
+
+struct shrcs;
 
 enum game_state {
 	E_PLAYING,
@@ -126,7 +129,6 @@ int send_targ_id(int msgq_id, unsigned int team_id, unsigned int targ_id);
 int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,
 		struct player *p);
 struct position find_player_pos(const struct mapinfo *m, unsigned int id);
-int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p);
 int nb_teams_in_game(const struct mapinfo *m);
 int get_winner(const struct mapinfo *m);
 

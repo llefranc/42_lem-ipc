@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:39:35 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 15:53:59 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 14:23:31 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,9 @@
 #include <sys/sem.h>
 
 #include "../include/log.h"
+#include "../include/game_utils.h"
+
+struct mapinfo;
 
 /**
  * enum clean_step - Describes which System V shared ressources needs to be
@@ -103,7 +106,7 @@ static inline int sem_unlock(int sem_id)
 
 key_t keygen(int i);
 int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize);
-int init_shared_rcs(const struct shrcs *rcs);
+int init_shared_rcs(struct shrcs *rcs, struct mapinfo **m);
 int get_shm_nattch(int shm_id);
 int clean_shared_rcs(const struct shrcs *rcs, enum clean_step step);
 
