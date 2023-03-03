@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:27:54 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 17:54:12 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 12:12:51 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,16 +36,16 @@ static _Bool is_valid_spawn(const struct mapinfo *m, int row, int col)
 	_Bool right = 1;
 
 	if (col - 1 >= 0)
-		left = !m->map[row][col - 1];
+		left = !get_id(m, row, col - 1);
 	if (col + 1 < MAP_NB_COLUMNS)
-		right = !m->map[row][col + 1];
+		right = !get_id(m, row, col + 1);
 
 	if (row - 1 >= 0)
-		up = !m->map[row - 1][col];
+		up = !get_id(m, row - 1, col);
 	if (row + 1 < MAP_NB_ROWS)
-		down = !m->map[row + 1][col];
+		down = !get_id(m, row + 1, col);
 
-	return !m->map[row][col] && up && down && left && right;
+	return !get_id(m, row, col) && up && down && left && right;
 }
 
 /**
@@ -79,8 +79,7 @@ static struct position find_spawn_pos(struct mapinfo *m, unsigned int team_id)
 	for (int row = rstart; row != cend; row += next) {
 		for (int col = cstart; col != rend; col += next) {
 			if (is_valid_spawn(m, row, col)) {
-				pos.row = row;
-				pos.col = col;
+				set_pos(&pos, row, col);
 				return pos;
 			}
 		}
@@ -102,7 +101,7 @@ static inline void spawn_update_map(struct mapinfo *m, const struct player *p)
 {
 	m->nbp++;
 	m->nbp_team[p->team_id - 1]++;
-	m->map[p->pos.row][p->pos.col] = p->id;
+	set_id(m, p->pos.row, p->pos.col, p->id);
 }
 
 /**

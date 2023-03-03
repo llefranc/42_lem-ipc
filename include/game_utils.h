@@ -14,7 +14,7 @@
 #define GAME_UTILS_H
 
 #define NB_PLAYERS_MAX 9
-#define NB_TEAMS_MAX 9
+#define NB_TEAMS_MAX 7 /* because 7 ascii colors */
 #define MAP_NB_ROWS 5
 #define MAP_NB_COLUMNS 5
 
@@ -82,6 +82,27 @@ struct player {
 static inline int get_mates_nb(const struct mapinfo *m, const struct player *p)
 {
 	return m->nbp_team[p->team_id - 1];
+}
+
+static inline void set_pos(struct position *p, int row, int col)
+{
+	p->row = row;
+	p->col = col;
+}
+
+static inline unsigned int get_id(const struct mapinfo *m, int row, int col)
+{
+	return m->map[row][col];
+}
+
+static inline void set_id(struct mapinfo *m, int row, int col, unsigned int id)
+{
+	m->map[row][col] = id;
+}
+
+static inline unsigned int get_team_id(const struct mapinfo *m, int row, int col)
+{
+	return (unsigned char)m->map[row][col];
 }
 
 /**

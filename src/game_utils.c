@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/28 16:06:56 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 09:18:09 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 12:11:07 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,45 @@
 #include "../include/log.h"
 #include "../include/shared_rcs.h"
 
+static char *colors[8] = {
+	"\x1B[0m",
+	"\x1B[31;1m",
+	"\x1B[32;1m",
+	"\x1B[33;1m",
+	"\x1B[34;1m",
+	"\x1B[35;1m",
+	"\x1B[36;1m",
+	"\x1B[37;1m"
+};
+
+static inline void print_team_id(unsigned int team_id)
+{
+	if (team_id)
+		printf(" %s%u\x1B[0m |" , colors[team_id], team_id);
+	else
+		printf("   |");
+}
+
+static inline void print_team_id_line(const struct mapinfo *m, int row)
+{
+	unsigned int team_id;
+
+	printf("\t|");
+	for (int col = 0; col < MAP_NB_COLUMNS; ++col) {
+		team_id = get_team_id(m, row, col);
+		print_team_id(team_id);
+	}
+	printf("\n");
+}
+
+static inline void print_grid_line(void)
+{
+	printf("\t-");
+	for (int col = 0; col < MAP_NB_COLUMNS; ++col)
+			printf("----");
+	printf("\n");
+}
+
 /**
  * print_map() - Refreshes the terminal with a representation of the game map.
  * @m: Contains all the map information.
@@ -34,43 +73,32 @@
 void print_map(const struct mapinfo *m)
 {
 	static _Bool is_map_printed = 0;
-	char buf[(MAP_NB_COLUMNS * 2) + 2] = {}; /* +2 for 1st '\t' and '\0' */
-	int team_nb = -1;
 
 	if (is_map_printed) {
-		printf("\x1B[%dA", (MAP_NB_ROWS) + 2);
+		printf("\x1B[%dA", MAP_NB_ROWS * 2 + 7);
 		fflush(stdout); /* remove previous map from terminal */
 	}
 
 	printf("\n");
 	for (int row = 0; row < MAP_NB_ROWS; ++row) {
-		int i = -1;
-		memset(buf, 0, sizeof(buf));
-		buf[++i] = '\t';
-		for (int col = 0; col < MAP_NB_COLUMNS; ++col) {
-
-			/* Reading first byte only --> team id */
-			buf[++i] = (char)m->map[row][col] + '0';
-			buf[++i] = '|';
-		}
-		buf[i] = '\t';
-		printf("%s", buf); /* print line map */
-
-		if (++team_nb < NB_TEAMS_MAX) {
-			printf("Team %d: %d player(s)", team_nb + 1,
-					(int)m->nbp_team[team_nb]);
-		}
-		printf("\n");
+		print_grid_line();
+		print_team_id_line(m, row);
 	}
+	print_grid_line();
 	printf("\n");
 
-	is_map_printed = 1;
-}
+	printf("\t TEAM       |");
+	for (int team_nb = 1; team_nb <= NB_TEAMS_MAX; ++team_nb)
+		print_team_id(team_nb);
+	printf("\n\t-------------");
+	for (int team_nb = 0; team_nb < NB_TEAMS_MAX; ++team_nb)
+		printf("----");
+	printf("\n\t NB PLAYERS |");
+	for (int team_nb = 0; team_nb < NB_TEAMS_MAX; ++team_nb)
+		printf(" %u |", (unsigned int)m->nbp_team[team_nb]);
+	printf("\n\n");
 
-static inline void set_pos(struct position *p, int row, int col)
-{
-	p->row = row;
-	p->col = col;
+	is_map_printed = 1;
 }
 
 /**
@@ -148,7 +176,8 @@ static unsigned int calc_dist_to_ennemy(const struct mapinfo *m,
 {
 	unsigned int dist;
 
-	if (!m->map[row][col] || is_in_team(m->map[row][col], p->team_id))
+	if (!get_id(m, row, col) ||
+			is_in_team(get_id(m, row, col), p->team_id))
 		return UINT_MAX;
 	dist = abs(p->pos.row - row) + abs(p->pos.col - col);
 	if (!dist)
@@ -187,7 +216,7 @@ int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,
 			dist = calc_dist_to_ennemy(m, p, row, col);
 			if (closest > dist) {
 				closest = dist;
-				targ_id = m->map[row][col];
+				targ_id = get_id(m, row, col);
 			}
 		}
 	}
@@ -218,9 +247,8 @@ struct position find_player_pos(const struct mapinfo *m, unsigned int id)
 		return p;
 	for (int row = 0; row < MAP_NB_ROWS; ++row) {
 		for (int col = 0; col < MAP_NB_COLUMNS; ++col) {
-			if (m->map[row][col] == id) {
-				p.row = row;
-				p.col = col;
+			if (get_id(m, row, col) == id) {
+				set_pos(&p, row, col);
 				return p;
 			}
 		}

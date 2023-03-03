@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:42:47 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 11:43:59 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 10:28:31 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,6 @@
 #include <sys/shm.h>
 
 #include "../include/shared_rcs.h"
-
-static inline int clean_shm(int shm_id);
-static inline int clean_sem(int sem_id);
-static inline int clean_msgq(int msqg_id);
 
 /**
  * keygen() - Generates a System V key.
@@ -39,6 +35,39 @@ key_t keygen(int i)
 	if ((key = ftok(buf, i)) == -1)
 		log_syserr("(ftok)");
 	return key;
+}
+
+static inline int clean_shm(int shm_id)
+{
+	int ret;
+
+	if ((ret = shmctl(shm_id, IPC_RMID, NULL)) == -1)
+		log_syserr("(shmctl - IPC_RMID)");
+	else
+		log_verb("Shared memory segment marked for destroy");
+	return ret;
+}
+
+static inline int clean_sem(int sem_id)
+{
+	int ret;
+
+	if ((ret = semctl(sem_id, 0, IPC_RMID)) == -1)
+		log_syserr("(semctl - IPC_RMID)");
+	else
+		log_verb("Semaphore set removed");
+	return ret;
+}
+
+static inline int clean_msgq(int msgq_id)
+{
+	int ret;
+
+	if ((ret = msgctl(msgq_id, IPC_RMID, NULL)) == -1)
+		log_syserr("(msgctl - IPC_RMID)");
+	else
+		log_verb("Message queue removed");
+	return ret;
 }
 
 /**
@@ -124,39 +153,6 @@ int get_shm_nattch(int shm_id)
 		return -1;
 	}
 	return buf.shm_nattch;
-}
-
-static inline int clean_shm(int shm_id)
-{
-	int ret;
-
-	if ((ret = shmctl(shm_id, IPC_RMID, NULL)) == -1)
-		log_syserr("(shmctl - IPC_RMID)");
-	else
-		log_verb("Shared memory segment marked for destroy");
-	return ret;
-}
-
-static inline int clean_sem(int sem_id)
-{
-	int ret;
-
-	if ((ret = semctl(sem_id, 0, IPC_RMID)) == -1)
-		log_syserr("(semctl - IPC_RMID)");
-	else
-		log_verb("Semaphore set removed");
-	return ret;
-}
-
-static inline int clean_msgq(int msgq_id)
-{
-	int ret;
-
-	if ((ret = msgctl(msgq_id, IPC_RMID, NULL)) == -1)
-		log_syserr("(msgctl - IPC_RMID)");
-	else
-		log_verb("Message queue removed");
-	return ret;
 }
 
 /**
