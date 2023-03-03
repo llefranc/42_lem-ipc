@@ -1,21 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   spawn.c                                            :+:      :+:    :+:   */
+/*   spawn_player.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:27:54 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 15:38:33 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/02 17:54:12 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <time.h>
 #include <stdio.h>
 
-#include "../include/spawn.h"
+#include "../include/spawn_player.h"
 
-#include "../include/utils.h"
+#include "../include/log.h"
 
 /**
  * is_valid_spawn() - Checks if a player can spawn on a square from the grid.
@@ -88,15 +88,13 @@ static struct position find_spawn_pos(struct mapinfo *m, unsigned int team_id)
 	return pos;
 }
 
-static inline int spawn_update_player(const struct mapinfo *m, struct player *p,
-		unsigned int new_targ)
+static inline int spawn_update_player(const struct mapinfo *m, struct player *p)
 {
 	if ((p->last_move = time(NULL)) == ((time_t) -1)) {
 		log_syserr("(time)");
 		return -1;
 	}
 	p->id = p->team_id + (m->nbp << 8); /* team_id 1 byte, play_id 3 bytes */
-	p->targ_id = new_targ;
 	return 0;
 }
 
@@ -126,8 +124,6 @@ static inline void spawn_update_map(struct mapinfo *m, const struct player *p)
 */
 int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
-	int new_targ;
-
 	if (sem_lock(rcs->sem_id) == -1)
 		return -1;
 
@@ -140,16 +136,10 @@ int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 		log_err("No spawn position available");
 		goto err_unlock_sem;
 	}
+	if (update_player_target(rcs, m, p) == -1)
+		return -1;
 
-	if ((new_targ = find_new_target(rcs, m, p)) == -1) {
-		goto  err_unlock_sem;
-	} else if (!new_targ) {
-		log_verb("Couldn't find a target on map");
-	} else if (send_targ_id(rcs->msgq_id, p->team_id,
-			(unsigned int)new_targ) == -1)
-		goto err_unlock_sem;
-
-	if (spawn_update_player(m, p, (unsigned int)new_targ) == -1)
+	if (spawn_update_player(m, p) == -1)
 		goto err_unlock_sem;
 	spawn_update_map(m, p);
 

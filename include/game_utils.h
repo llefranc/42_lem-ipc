@@ -1,26 +1,32 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   game.h                                             :+:      :+:    :+:   */
+/*   game_utils.h                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 18:28:07 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 15:43:52 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/02 15:45:15 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef GAME_H
-#define GAME_H
+#ifndef GAME_UTILS_H
+#define GAME_UTILS_H
 
 #define NB_PLAYERS_MAX 9
 #define NB_TEAMS_MAX 9
-#define MAP_NB_ROWS 10
-#define MAP_NB_COLUMNS 10
+#define MAP_NB_ROWS 5
+#define MAP_NB_COLUMNS 5
 
 #include <time.h>
 
 #include "../include/shared_rcs.h"
+
+enum game_state {
+	E_PLAYING,
+	E_WAITING,
+	E_DEAD,
+};
 
 /**
  * struct position - Represents a square on a grid.
@@ -93,8 +99,9 @@ static inline _Bool is_in_team(unsigned int play_id, unsigned int team_id)
 
 void print_map(const struct mapinfo *m);
 int send_targ_id(int msgq_id, unsigned int team_id, unsigned int targ_id);
-int find_new_target(const struct shrcs *rcs, const struct mapinfo *m,
-		const struct player *p);
+int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,
+		struct player *p);
 struct position find_player_pos(const struct mapinfo *m, unsigned int id);
+int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p);
 
-#endif /* GAME_H */
+#endif /* GAME_UTILS_H */

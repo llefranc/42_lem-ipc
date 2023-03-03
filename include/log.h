@@ -1,17 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   utils.h                                            :+:      :+:    :+:   */
+/*   log.h                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:47:22 by llefranc          #+#    #+#             */
-/*   Updated: 2023/02/03 18:42:27 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/02 15:53:40 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef LOG_H
+#define LOG_H
 
 #include <stdio.h>
 #include <string.h>
@@ -83,4 +83,4 @@ static inline void log_syserr(const char *msg)
 }
 #endif /* DEBUG */
 
-#endif
+#endif /* LOG_H */

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   game.c                                             :+:      :+:    :+:   */
+/*   game_utils.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/28 16:06:56 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 15:43:42 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 09:18:09 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,9 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
-#include "../include/game.h"
+#include "../include/game_utils.h"
 
-#include "../include/utils.h"
+#include "../include/log.h"
 #include "../include/shared_rcs.h"
 
 /**
@@ -90,14 +90,14 @@ static int recv_targ_id(int msgq_id, unsigned int team_id)
 
 	if (msgrcv(msgq_id, &buf, sizeof(buf.targ_id), buf.team_id,
 			IPC_NOWAIT) != -1) {
-		log_verb("Received target id from message queue");
+		// log_verb("Received target id from message queue");
 		return *(unsigned int *)buf.targ_id;
 
 	} else if (errno != ENOMSG) {
 		log_syserr("(msgrcv)");
 		return -1;
 	}
-	log_verb("No target id to receive from message queue");
+	// log_verb("No target id to receive from message queue");
 	return 0;
 }
 
@@ -124,7 +124,7 @@ int send_targ_id(int msgq_id, unsigned int team_id, unsigned int targ_id)
 			IPC_NOWAIT)) == -1) {
 		log_syserr("(msgsnd)");
 	}
-	log_verb("Send new target id in message queue");
+	// log_verb("Send new target id in message queue");
 	return ret;
 }
 
@@ -157,20 +157,23 @@ static unsigned int calc_dist_to_ennemy(const struct mapinfo *m,
 }
 
 /**
- * find_new_target() - Finds the id of next ennemy to target.
+ * update_player_target() - Update the player target with the id of the closest
+ *                          ennemy.
  * @rcs: Contains all information for shared ressources.
  * @m: Contains all the map information.
  * @p: Contains the actual player information.
  *
  * Checks the message queue to see if a team member already sent the id of an
  * ennemy player to target. If not, looks on the board to find the closest
- * ennemy.
+ * ennemy. If an ennemy is found, the target_id of player is update and a
+ * message with this target id and the player team id is sent on the message
+ * queue.
  *
  * Return: The identifiant of an ennemy player as a positive integer, 0 if there
  *         is no ennemy to target, -1 if an error occured.
 */
-int find_new_target(const struct shrcs *rcs, const struct mapinfo *m,
-		const struct player *p)
+int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,
+		struct player *p)
 {
 	int targ_id;
 	unsigned int dist;
@@ -188,6 +191,13 @@ int find_new_target(const struct shrcs *rcs, const struct mapinfo *m,
 			}
 		}
 	}
+	p->targ_id = (unsigned int)targ_id;
+	// if (!p->targ_id)
+	// 	log_verb("Could'nt find a new target on map");
+	// else if (send_targ_id(rcs->msgq_id, p->team_id, p->targ_id) == -1)
+	if (send_targ_id(rcs->msgq_id, p->team_id, p->targ_id) == -1)
+		return -1;
+
 	return targ_id;
 }
 
@@ -217,6 +227,3 @@ struct position find_player_pos(const struct mapinfo *m, unsigned int id)
 	}
 	return p;
 }
-
-
-
