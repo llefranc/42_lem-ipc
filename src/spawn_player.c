@@ -6,12 +6,13 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:27:54 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 12:12:51 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 17:15:28 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <time.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "../include/spawn_player.h"
 
@@ -49,35 +50,34 @@ static _Bool is_valid_spawn(const struct mapinfo *m, int row, int col)
 }
 
 /**
- * find_spawn_pos() - Finds a valid spawn position based on team id.
+ * find_spawn_pos() - Finds a valid spawn position.
  * @m: Contains all the map information.
- * @team_id: The team id of the player (lemipc arg, between 1 and 9).
  *
- * Iterates through the map looking for a valid spawn position for a new player
- * (i.e not surrounded by any other player in up, down, left and right
- * position). The iteration will start from [row_min][col_min] for odd team id,
- * and in reverse order (from [row_max][col_max]) for pair team id.
+ * Tries to find a valid (i.e not surrounded by any other player in up, down,
+ * left and right position) random spawn x times (x = MAP_NB_ROWS *
+ * MAP_NB_COLUMNS). If no random spawn is found after x times, then iterates
+ * through and checks all squares.
  *
  * Return: A valid position if a spawn was found, a position of -1,-1 otherwise.
 */
-static struct position find_spawn_pos(struct mapinfo *m, unsigned int team_id)
+static struct position find_spawn_pos(struct mapinfo *m)
 {
-	int next = 1;
-	int rstart = 0;
-	int cstart = 0;
-	int rend = MAP_NB_ROWS;
-	int cend = MAP_NB_COLUMNS;
+	int row;
+	int col;
+	int nb_try = MAP_NB_ROWS * MAP_NB_COLUMNS;
 	struct position pos = { .row = -1, .col = -1 };
 
-	if (team_id % 2 == 0) {
-		next = -1;
-		rstart = MAP_NB_ROWS - 1;
-		cstart = MAP_NB_COLUMNS - 1;
-		rend = -1;
-		cend = -1;
-	}
-	for (int row = rstart; row != cend; row += next) {
-		for (int col = cstart; col != rend; col += next) {
+	do {
+		row = rand() % MAP_NB_ROWS;
+		col = rand() % MAP_NB_COLUMNS;
+		if (is_valid_spawn(m, row, col)) {
+			set_pos(&pos, row, col);
+			return pos;
+		}
+	} while (--nb_try);
+
+	for (int row = 0; row < MAP_NB_ROWS; ++row) {
+		for (int col = 0; col < MAP_NB_COLUMNS; ++col) {
 			if (is_valid_spawn(m, row, col)) {
 				set_pos(&pos, row, col);
 				return pos;
@@ -126,11 +126,11 @@ int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 	if (sem_lock(rcs->sem_id) == -1)
 		return -1;
 
-	if (get_mates_nb(m, p) + 1 > NB_PLAYERS_MAX) {
+	if (get_nb_players_in_team(m, p) + 1 > NB_PLAYERS_MAX) {
 		log_err("Too many players in this team");
 		goto err_unlock_sem;
 	}
-	p->pos = find_spawn_pos(m, p->team_id);
+	p->pos = find_spawn_pos(m);
 	if (p->pos.row == -1) {
 		log_err("No spawn position available");
 		goto err_unlock_sem;
@@ -151,4 +151,32 @@ int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 err_unlock_sem:
 	sem_unlock(rcs->sem_id);
 	return -1;
+}
+
+/**
+ * unspawn_player() - Removes a player from the grid.
+ * @rcs: Contains all information for shared ressources.
+ * @m: Contains all the map information.
+ * @p: Contains the actual player information.
+ *
+ * Sets the actual player position on the grid to 0, and decrement the number
+ * of players in its team.
+ *
+ * Return: 0 on success, -1 on failure.
+*/
+int unspawn_player(const struct shrcs *rcs, struct mapinfo *m, const struct
+		player *p)
+{
+	if (sem_lock(rcs->sem_id) == -1)
+		return -1;
+	set_id(m, p->pos.row, p->pos.col, 0);
+	m->nbp_team[p->team_id - 1]--;
+	printf("Player removed from map (row:%d,col:%d). Now nb in team:%d\n",
+			p->pos.row, p->pos.col, m->nbp_team[p->team_id - 1]);
+	if (sem_unlock(rcs->sem_id) == -1)
+		return -1;
+
+	printf("[ INFO  ] Player removed from map (row %d, col %d)\n",
+			p->pos.row, p->pos.col);
+	return 0;
 }

@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:28:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 15:52:36 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 16:17:01 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,5 +17,7 @@
 #include "shared_rcs.h"
 
 int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p);
+int unspawn_player(const struct shrcs *rcs, struct mapinfo *m, const struct
+		player *p);
 
 #endif /* SPAWN_PLAYER_H */

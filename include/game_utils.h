@@ -15,8 +15,8 @@
 
 #define NB_PLAYERS_MAX 9
 #define NB_TEAMS_MAX 7 /* because 7 ascii colors */
-#define MAP_NB_ROWS 5
-#define MAP_NB_COLUMNS 5
+#define MAP_NB_ROWS 3
+#define MAP_NB_COLUMNS 3
 #define SEC_START_TIME 10
 
 #include <time.h>
@@ -78,14 +78,14 @@ struct player {
 };
 
 /**
- * get_mates_nb() - Gets the number of players in the player team.
+ * get_nb_players_in_team() - Gets the number of players in the player team.
  * @team_id: The team id of the player (lemipc arg, between 1 and 9).
  * @play_id: The id of a player resulting in the combination of its personnal id
  *           and its team id (3 bytes for player id, 1 byte for team id).
  *
  * Return: The number of players in the player team (actual player include).
 */
-static inline int get_mates_nb(const struct mapinfo *m, const struct player *p)
+static inline int get_nb_players_in_team(const struct mapinfo *m, const struct player *p)
 {
 	return m->nbp_team[p->team_id - 1];
 }
@@ -130,6 +130,7 @@ int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,
 		struct player *p);
 struct position find_player_pos(const struct mapinfo *m, unsigned int id);
 int nb_teams_in_game(const struct mapinfo *m);
+int nb_players_in_game(const struct mapinfo *m);
 int get_winner(const struct mapinfo *m);
 
 #endif /* GAME_UTILS_H */

@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 15:44:05 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 17:08:56 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,15 +96,15 @@ static inline int wait_for_players(const struct shrcs *rcs,
 			return -1;
 		}
 	}
-	while (time_since_start < SEC_START_TIME);
+	while (time_since_start < SEC_START_TIME && !is_sig_received);
 	printf("\n");
 	return 1;
 }
 
-
 int graphic_mode(const struct shrcs *rcs, const struct mapinfo *m)
 {
 	int ret;
+	int winner = 0;
 	int still_playing = 0;
 
 	log_info("Graphic mode started");
@@ -126,8 +126,13 @@ int graphic_mode(const struct shrcs *rcs, const struct mapinfo *m)
 	} else {
 		if (sem_lock(rcs->sem_id) == -1)
 			return -1;
+
 		print_map(m);
-		printf("[ INFO  ] Team %d won the game !\n", get_winner(m));
+		if ((winner = get_winner(m)) != 0)
+			printf("[ INFO  ] Team %d won the game !\n", winner);
+		else
+			printf("[ INFO  ] Nobody joined the game\n");
+
 		if (sem_unlock(rcs->sem_id) == -1)
 			return -1;
 	}
@@ -138,10 +143,15 @@ int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
 	int ret;
 
+	log_info("Player mode started");
 	if (spawn_player(rcs, m, p) == -1)
 		return -1;
 	if ((ret = wait_for_players(rcs, m)) < 1)
 		return ret;
+
+	// char buf[1];
+	// read(1, buf, 1);
+
 	return 0;
 }
 
@@ -163,23 +173,28 @@ int main(int ac, char **av)
 	if (get_shared_rcs(&rcs, key, sizeof(struct mapinfo)) == -1)
 		return 1;
 	if (init_shared_rcs(&rcs, &m) == -1)
-		goto fatal_err_clean_all_rcs;
+		goto err_clean_all_rcs;
 
 	p.team_id = (unsigned int)team_id;
 	if (!team_id) {
 		if (graphic_mode(&rcs, m) == -1)
-			goto fatal_err_clean_all_rcs;
+			goto err_clean_all_rcs;
 	} else {
 		if (player_mode(&rcs, m, &p) == -1)
-			goto fatal_err_clean_all_rcs;
+			goto err_clean_all_rcs;
 	}
 
+	if (p.team_id && unspawn_player(&rcs, m, &p) == -1)
+		goto err_clean_all_rcs;
 	if (clean_shared_rcs(&rcs, E_CLEAN_ALL) < 0)
 		return 1;
 	return 0;
 
-fatal_err_clean_all_rcs:
-	log_err("Exit because of an internal error");
+// err_unspawn_player:
+// 	if (p.team_id)
+// 		unspawn_player(&rcs, m, &p);
+
+err_clean_all_rcs:
 	clean_shared_rcs(&rcs, E_CLEAN_ALL);
 	return 1;
 }

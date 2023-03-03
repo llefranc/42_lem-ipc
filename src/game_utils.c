@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/28 16:06:56 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 13:47:27 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/03 15:48:00 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,14 +118,14 @@ static int recv_targ_id(int msgq_id, unsigned int team_id)
 
 	if (msgrcv(msgq_id, &buf, sizeof(buf.targ_id), buf.team_id,
 			IPC_NOWAIT) != -1) {
-		// log_verb("Received target id from message queue");
+		log_verb("Received target id from message queue");
 		return *(unsigned int *)buf.targ_id;
 
 	} else if (errno != ENOMSG) {
 		log_syserr("(msgrcv)");
 		return -1;
 	}
-	// log_verb("No target id to receive from message queue");
+	log_verb("No target id to receive from message queue");
 	return 0;
 }
 
@@ -152,7 +152,7 @@ int send_targ_id(int msgq_id, unsigned int team_id, unsigned int targ_id)
 			IPC_NOWAIT)) == -1) {
 		log_syserr("(msgsnd)");
 	}
-	// log_verb("Send new target id in message queue");
+	log_verb("Send new target id in message queue");
 	return ret;
 }
 
@@ -221,10 +221,9 @@ int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,
 		}
 	}
 	p->targ_id = (unsigned int)targ_id;
-	// if (!p->targ_id)
-	// 	log_verb("Could'nt find a new target on map");
-	// else if (send_targ_id(rcs->msgq_id, p->team_id, p->targ_id) == -1)
-	if (send_targ_id(rcs->msgq_id, p->team_id, p->targ_id) == -1)
+	if (!p->targ_id)
+		log_verb("Could'nt find a new target on map");
+	else if (send_targ_id(rcs->msgq_id, p->team_id, p->targ_id) == -1)
 		return -1;
 
 	return targ_id;
@@ -264,6 +263,15 @@ int nb_teams_in_game(const struct mapinfo *m)
 		if (m->nbp_team[team_id])
 			++nb;
 	}
+	return nb;
+}
+
+int nb_players_in_game(const struct mapinfo *m)
+{
+	int nb = 0;
+
+	for (int team_id = 0; team_id < NB_TEAMS_MAX; ++team_id)
+		nb += m->nbp_team[team_id];
 	return nb;
 }
 
