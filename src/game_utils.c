@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/28 16:06:56 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/06 17:51:13 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/10 14:54:27 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,7 +126,7 @@ static int recv_targ_id(int msgq_id, unsigned int team_id)
 		target_id = *(unsigned int *)buf.targ_id;
 		ennemy_team_id = (unsigned int)((unsigned char)target_id);
 		printf("[ INFO  ] Received target id %u from message queue "
-				"(team_id: %u)\n", target_id, ennemy_team_id);
+				"(team id: %u)\n", target_id, ennemy_team_id);
 		return target_id;
 	} else if (errno != ENOMSG) {
 		log_syserr("(msgrcv)");
@@ -154,12 +154,14 @@ int send_targ_id(int msgq_id, unsigned int team_id, unsigned int targ_id)
 	int ret;
 	struct msgbuf buf = { .team_id = team_id };
 	*(unsigned int *)buf.targ_id = targ_id;
+	unsigned int ennemy_team_id = (unsigned int)((unsigned char)targ_id);
 
 	if ((ret = msgsnd(msgq_id, &buf, sizeof(buf.targ_id),
 			IPC_NOWAIT)) == -1) {
 		log_syserr("(msgsnd)");
 	}
-	log_verb("Send new target id in message queue");
+	printf("[ INFO  ] Send target id %u in message queue (team id: %u)\n",
+			targ_id, ennemy_team_id);
 	return ret;
 }
 
@@ -219,7 +221,7 @@ int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,
 	if ((targ_id = recv_targ_id(rcs->msgq_id, p->team_id)) == -1)
 		return -1;
 
-	ennemy_pos = find_player_pos(m, p->targ_id);
+	ennemy_pos = find_player_pos(m, targ_id);
 	if (!targ_id || ennemy_pos.row == -1) {
 		for (int row = 0; row < MAP_NB_ROWS; ++row) {
 			for (int col = 0; col < MAP_NB_COLS; ++col) {
