@@ -99,19 +99,79 @@ static inline void set_pos(struct position *p, int row, int col)
 	p->col = col;
 }
 
-static inline unsigned int get_id(const struct mapinfo *m, int row, int col)
-{
-	return m->map[row][col];
-}
-
 static inline void set_id(struct mapinfo *m, int row, int col, unsigned int id)
 {
 	m->map[row][col] = id;
 }
 
+static inline unsigned int get_id(const struct mapinfo *m, int row, int col)
+{
+	return m->map[row][col];
+}
+
+static inline unsigned int get_left_id(const struct mapinfo *m, int row,
+		int col)
+{
+	if (col - 1 >= 0)
+		return get_id(m, row, col -1);
+	return -1;
+}
+
+static inline unsigned int get_right_id(const struct mapinfo *m, int row,
+		int col)
+{
+	if (col + 1 < MAP_NB_COLS)
+		return get_id(m, row, col + 1);
+	return -1;
+}
+
+static inline unsigned int get_up_id(const struct mapinfo *m, int row,
+		int col)
+{
+	if (row - 1 >= 0)
+		return get_id(m, row -1, col);
+	return -1;
+}
+
+static inline unsigned int get_down_id(const struct mapinfo *m, int row,
+		int col)
+{
+	if (row + 1 < MAP_NB_ROWS)
+		return get_id(m, row + 1, col);
+	return -1;
+}
+
 static inline unsigned int get_team_id(const struct mapinfo *m, int row, int col)
 {
 	return (unsigned char)m->map[row][col];
+}
+
+static inline int get_left_team_id(const struct mapinfo *m, int row, int col)
+{
+	if (col - 1 >= 0)
+		return (int)get_team_id(m, row, col -1);
+	return -1;
+}
+
+static inline int get_right_team_id(const struct mapinfo *m, int row, int col)
+{
+	if (col + 1 < MAP_NB_COLS)
+		return (int)get_team_id(m, row, col + 1);
+	return -1;
+}
+
+static inline int get_up_team_id(const struct mapinfo *m, int row, int col)
+{
+	if (row - 1 >= 0)
+		return (int)get_team_id(m, row -1, col);
+	return -1;
+}
+
+static inline int get_down_team_id(const struct mapinfo *m, int row, int col)
+{
+	if (row + 1 < MAP_NB_ROWS)
+		return (int)get_team_id(m, row + 1, col);
+	return -1;
 }
 
 /**

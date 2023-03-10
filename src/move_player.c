@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:49:33 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/10 13:37:24 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/10 13:47:58 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,38 +19,6 @@
 #include <string.h>
 
 #define TIME_BETWEEN_MOVE 2
-
-static inline int get_left_team_id(const struct mapinfo *m, int row,
-		int col)
-{
-	if (col - 1 >= 0)
-		return (int)get_team_id(m, row, col -1);
-	return -1;
-}
-
-static inline int get_right_team_id(const struct mapinfo *m, int row,
-		int col)
-{
-	if (col + 1 < MAP_NB_COLS)
-		return (int)get_team_id(m, row, col + 1);
-	return -1;
-}
-
-static inline int get_up_team_id(const struct mapinfo *m, int row,
-		int col)
-{
-	if (row - 1 >= 0)
-		return (int)get_team_id(m, row -1, col);
-	return -1;
-}
-
-static inline int get_down_team_id(const struct mapinfo *m, int row,
-		int col)
-{
-	if (row + 1 < MAP_NB_ROWS)
-		return (int)get_team_id(m, row + 1, col);
-	return -1;
-}
 
 static inline void move_player_left(struct player *p)
 {
@@ -130,6 +98,8 @@ int is_dead(const struct shrcs *rcs, struct mapinfo *m, const struct player *p)
 		if (strchr(&squares_tids[i + 1], squares_tids[i]) != NULL) {
 			game_state = E_STATE_DEAD;
 			unspawn_player(m, p);
+			sleep(TIME_BETWEEN_MOVE);
+			m->time_last_move.tv_sec += TIME_BETWEEN_MOVE;
 			break;
 		}
 	}
