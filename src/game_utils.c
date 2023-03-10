@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/28 16:06:56 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 15:48:00 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/06 17:51:13 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,8 @@
 
 #include "../include/log.h"
 #include "../include/shared_rcs.h"
+
+#define NS_PER_SECOND 1000000000
 
 static char *colors[8] = {
 	"\x1B[0m",
@@ -48,7 +50,7 @@ static inline void print_team_id_line(const struct mapinfo *m, int row)
 	unsigned int team_id;
 
 	printf("\t|");
-	for (int col = 0; col < MAP_NB_COLUMNS; ++col) {
+	for (int col = 0; col < MAP_NB_COLS; ++col) {
 		team_id = get_team_id(m, row, col);
 		print_team_id(team_id);
 	}
@@ -58,7 +60,7 @@ static inline void print_team_id_line(const struct mapinfo *m, int row)
 static inline void print_grid_line(void)
 {
 	printf("\t-");
-	for (int col = 0; col < MAP_NB_COLUMNS; ++col)
+	for (int col = 0; col < MAP_NB_COLS; ++col)
 			printf("----");
 	printf("\n");
 }
@@ -72,14 +74,15 @@ static inline void print_grid_line(void)
 */
 void print_map(const struct mapinfo *m)
 {
+	static unsigned long nb_moves = 0;
 	static _Bool is_map_printed = 0;
 
 	if (is_map_printed) {
-		printf("\x1B[%dA", MAP_NB_ROWS * 2 + 7);
+		printf("\x1B[%dA", MAP_NB_ROWS * 2 + 8);
 		fflush(stdout); /* remove previous map from terminal */
 	}
 
-	printf("\n");
+	printf("\nNumber of moves: %ld\n", nb_moves++);
 	for (int row = 0; row < MAP_NB_ROWS; ++row) {
 		print_grid_line();
 		print_team_id_line(m, row);
@@ -114,13 +117,17 @@ void print_map(const struct mapinfo *m)
 */
 static int recv_targ_id(int msgq_id, unsigned int team_id)
 {
+	unsigned int target_id;
+	unsigned int ennemy_team_id;
 	struct msgbuf buf = { .team_id = team_id };
 
 	if (msgrcv(msgq_id, &buf, sizeof(buf.targ_id), buf.team_id,
 			IPC_NOWAIT) != -1) {
-		log_verb("Received target id from message queue");
-		return *(unsigned int *)buf.targ_id;
-
+		target_id = *(unsigned int *)buf.targ_id;
+		ennemy_team_id = (unsigned int)((unsigned char)target_id);
+		printf("[ INFO  ] Received target id %u from message queue "
+				"(team_id: %u)\n", target_id, ennemy_team_id);
+		return target_id;
 	} else if (errno != ENOMSG) {
 		log_syserr("(msgrcv)");
 		return -1;
@@ -186,7 +193,7 @@ static unsigned int calc_dist_to_ennemy(const struct mapinfo *m,
 }
 
 /**
- * update_player_target() - Update the player target with the id of the closest
+ * update_player_target() - Updates the player target with the id of the closest
  *                          ennemy.
  * @rcs: Contains all information for shared ressources.
  * @m: Contains all the map information.
@@ -207,16 +214,20 @@ int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,
 	int targ_id;
 	unsigned int dist;
 	unsigned int closest = UINT_MAX;
+	struct position ennemy_pos;
 
-	if ((targ_id = recv_targ_id(rcs->msgq_id, p->team_id)) != 0)
-		return targ_id;
+	if ((targ_id = recv_targ_id(rcs->msgq_id, p->team_id)) == -1)
+		return -1;
 
-	for (int row = 0; row < MAP_NB_ROWS; ++row) {
-		for (int col = 0; col < MAP_NB_COLUMNS; ++col) {
-			dist = calc_dist_to_ennemy(m, p, row, col);
-			if (closest > dist) {
-				closest = dist;
-				targ_id = get_id(m, row, col);
+	ennemy_pos = find_player_pos(m, p->targ_id);
+	if (!targ_id || ennemy_pos.row == -1) {
+		for (int row = 0; row < MAP_NB_ROWS; ++row) {
+			for (int col = 0; col < MAP_NB_COLS; ++col) {
+				dist = calc_dist_to_ennemy(m, p, row, col);
+				if (closest > dist) {
+					closest = dist;
+					targ_id = get_id(m, row, col);
+				}
 			}
 		}
 	}
@@ -245,7 +256,7 @@ struct position find_player_pos(const struct mapinfo *m, unsigned int id)
 	if (!id)
 		return p;
 	for (int row = 0; row < MAP_NB_ROWS; ++row) {
-		for (int col = 0; col < MAP_NB_COLUMNS; ++col) {
+		for (int col = 0; col < MAP_NB_COLS; ++col) {
 			if (get_id(m, row, col) == id) {
 				set_pos(&p, row, col);
 				return p;
@@ -283,3 +294,29 @@ int get_winner(const struct mapinfo *m)
 	}
 	return 0;
 }
+
+/**
+ * sub_timespec() - Substract a struct timespec to another.
+ * @t1: time 1.
+ * @t2: time 2.
+ *
+ * Return: A struct timespec with the result of t1 - t2.
+*/
+struct timespec sub_timespec(struct timespec t1, struct timespec t2)
+{
+	struct timespec res;
+	res.tv_nsec = t1.tv_nsec - t2.tv_nsec;
+	res.tv_sec  = t1.tv_sec - t2.tv_sec;
+	if (res.tv_sec > 0 && res.tv_nsec < 0)
+	{
+		res.tv_nsec += NS_PER_SECOND;
+		res.tv_sec--;
+	}
+	else if (res.tv_sec < 0 && res.tv_nsec > 0)
+	{
+		res.tv_nsec -= NS_PER_SECOND;
+		res.tv_sec++;
+	}
+	return res;
+}
+

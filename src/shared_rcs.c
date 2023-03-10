@@ -6,13 +6,14 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:42:47 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 14:55:39 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/06 17:50:05 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <unistd.h>
 #include <sys/msg.h>
 #include <sys/shm.h>
+#include <time.h>
 
 #include "../include/shared_rcs.h"
 #include "../include/game_utils.h"
@@ -110,18 +111,19 @@ int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize)
 	return 0;
 }
 
-static inline int set_start_time(struct shrcs *rcs, struct mapinfo *m)
+static inline int init_shm(struct shrcs *rcs, struct mapinfo *m)
 {
-	time_t t;
+	struct timespec t;
 
-	if ((t = time(NULL)) == ((time_t) -1)) {
-		log_syserr("(time)");
+	if (clock_gettime(CLOCK_REALTIME, &t) == -1) {
+		log_syserr("(clock_gettime)");
 		return -1;
 	}
 	if (sem_lock(rcs->sem_id) == -1)
 		return -1;
 	m = (struct mapinfo *)rcs->shm_addr;
 	m->start_time = t;
+	m->game_state = E_STATE_PLAY;
 	if (sem_unlock(rcs->sem_id) == -1)
 		return -1;
 	return 0;
@@ -129,10 +131,11 @@ static inline int set_start_time(struct shrcs *rcs, struct mapinfo *m)
 
 /**
  * init_shared_rcs() - Initializes the System V shared ressources.
- * @rcs: Contains all information of System V shared ressources.
+* @rcs: Contains all information of System V shared ressources.
  *
  * Initializes the only semaphore of the semaphore set to value 1.
- * Initializes start time value in the shared memory segment with actual time.
+ * Initializes start time value in the shared memory segment with actual time,
+ * and game_state to E_STATE_PLAY.
  * The others bytes of shared memory segment are automatically set to 0.
  *
  * Return: 0 on success, -1 on failure.
@@ -158,7 +161,7 @@ int init_shared_rcs(struct shrcs *rcs, struct mapinfo **m)
 			log_syserr("(semctl - SETVAL)");
 			return -1;
 		}
-		if (set_start_time(rcs, *m) == -1)
+		if (init_shm(rcs, *m) == -1)
 			return -1;
 	}
 	log_verb("Semaphore initialized to 1");

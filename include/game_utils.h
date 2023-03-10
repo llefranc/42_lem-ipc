@@ -15,9 +15,9 @@
 
 #define NB_PLAYERS_MAX 9
 #define NB_TEAMS_MAX 7 /* because 7 ascii colors */
-#define MAP_NB_ROWS 3
-#define MAP_NB_COLUMNS 3
-#define SEC_START_TIME 10
+#define MAP_NB_ROWS 5
+#define MAP_NB_COLS 5
+#define SEC_START_TIME 30
 
 #include <time.h>
 
@@ -26,9 +26,10 @@
 struct shrcs;
 
 enum game_state {
-	E_PLAYING,
-	E_WAITING,
-	E_DEAD,
+	E_STATE_PLAY,
+	E_STATE_PRINT,
+	E_STATE_WON,
+	E_STATE_DEAD,
 };
 
 /**
@@ -43,8 +44,10 @@ struct position {
 
 /**
  * struct mapinfo - Contains all the map information.
+ * @game_state: The current state of the game.
  * @start_time: The time at which the first process joined the game (either in
  *              player mode or graphic mode).
+ * @time_last_move: The time at which the last player move occured.
  * @nbp: The number of player which joined the game since it started.
  * @nbp_team: The number of players per team actually playing.
  * @map: The game map containing all the players.
@@ -53,10 +56,12 @@ struct position {
  * each process to be able to see the actual game state and interact with it.
 */
 struct mapinfo {
-	time_t start_time;
+	int game_state;
+	struct timespec start_time;
+	struct timespec time_last_move;
 	unsigned int nbp;
 	unsigned char nbp_team[NB_TEAMS_MAX];
-	unsigned int map[MAP_NB_ROWS][MAP_NB_COLUMNS];
+	unsigned int map[MAP_NB_ROWS][MAP_NB_COLS];
 };
 
 /**
@@ -67,14 +72,12 @@ struct mapinfo {
  * @team_id: The team id of the player (lemipc arg, between 1 and 9).
  * @targ_id: The id of an ennemy player that the player is actually targeting.
  * @pos: The player position on the grid.
- * @last_move: The time of when its last moved occured.
 */
 struct player {
 	unsigned int id;
 	unsigned int team_id;
 	unsigned int targ_id;
 	struct position pos;
-	time_t last_move;
 };
 
 /**
@@ -124,6 +127,7 @@ static inline _Bool is_in_team(unsigned int play_id, unsigned int team_id)
 	return (unsigned char)play_id == (unsigned char)team_id;
 }
 
+struct timespec sub_timespec(struct timespec t1, struct timespec t2);
 void print_map(const struct mapinfo *m);
 int send_targ_id(int msgq_id, unsigned int team_id, unsigned int targ_id);
 int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,

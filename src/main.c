@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 17:08:56 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/03/10 13:30:00 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,13 +60,11 @@ static inline int parse_team_id(int ac, char **av)
 	return (int)team_id;
 }
 
-static inline int wait_for_players(const struct shrcs *rcs,
-		const struct mapinfo *m)
+static int join_game(const struct shrcs *rcs, const struct mapinfo *m)
 {
-	time_t now;
-	time_t tmp;
-	time_t time_since_start = SEC_START_TIME;
-	time_t start_time;
+	struct timespec res;
+	struct timespec now;
+	struct timespec start_time;
 
 	if (sem_lock(rcs->sem_id) == -1)
 		return -1;
@@ -74,60 +72,90 @@ static inline int wait_for_players(const struct shrcs *rcs,
 	if (sem_unlock(rcs->sem_id) == -1)
 		return -1;
 
-	if ((now = time(NULL)) == ((time_t) -1)) {
-		log_syserr("(time)");
+	if (clock_gettime(CLOCK_REALTIME, &now) == -1) {
+		log_syserr("(clock_gettime)");
 		return -1;
 	}
-	if (now - start_time > SEC_START_TIME) {
+	res = sub_timespec(now, start_time);
+	if (res.tv_sec > SEC_START_TIME) {
 		log_info("Game has already started, impossible to join");
 		return 0;
 	}
-	printf("[ INFO  ] Waiting for players to join, game will start in ");
-	fflush(stdout);
-	do {
-		tmp = now - start_time;
-		if (tmp != time_since_start) {
-			time_since_start = tmp;
-			printf("%ld... ", SEC_START_TIME - time_since_start);
-			fflush(stdout);
-		}
-		if ((now = time(NULL)) == ((time_t) -1)) {
-			log_syserr("(time)");
-			return -1;
-		}
-	}
-	while (time_since_start < SEC_START_TIME && !is_sig_received);
-	printf("\n");
 	return 1;
 }
 
-int graphic_mode(const struct shrcs *rcs, const struct mapinfo *m)
+static inline int wait_for_players(const struct shrcs *rcs,
+		const struct mapinfo *m)
+{
+	struct timespec now;
+	struct timespec tmp;
+	struct timespec time_elapsed = { .tv_sec = SEC_START_TIME };
+	struct timespec start_time;
+
+	if (clock_gettime(CLOCK_REALTIME, &now) == -1) {
+		log_syserr("(clock_gettime)");
+		return -1;
+	}
+	if (sem_lock(rcs->sem_id) == -1)
+		return -1;
+	start_time = m->start_time;
+	if (sem_unlock(rcs->sem_id) == -1)
+		return -1;
+
+	printf("[ INFO  ] Waiting for players to join, game will start in ");
+	fflush(stdout);
+	do {
+		tmp = sub_timespec(now, start_time);
+		if (tmp.tv_sec != time_elapsed.tv_sec) {
+			time_elapsed = tmp;
+			printf("%ld... ", SEC_START_TIME - time_elapsed.tv_sec);
+			fflush(stdout);
+		}
+		if (clock_gettime(CLOCK_REALTIME, &now) == -1) {
+			log_syserr("(clock_gettime)");
+			return -1;
+		}
+	}
+	while (time_elapsed.tv_sec < SEC_START_TIME && !is_sig_received);
+	printf("\n");
+	if (is_sig_received)
+		return -1;
+	log_info("Launching game!");
+	return 0;
+}
+
+int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
 {
 	int ret;
 	int winner = 0;
 	int still_playing = 0;
 
 	log_info("Graphic mode started");
-	if ((ret = wait_for_players(rcs, m)) < 1)
+	if ((ret = join_game(rcs, m)) < 1)
 		return ret;
-
+	if (wait_for_players(rcs, m) == -1)
+		return -1;
 	do {
 		if (sem_lock(rcs->sem_id) == -1)
 			return -1;
-		print_map(m);
-		still_playing = nb_teams_in_game(m);
 
+		still_playing = nb_teams_in_game(m);
+		if (m->game_state == E_STATE_PRINT) {
+			if (still_playing <= 1) {
+				m->game_state = E_STATE_WON;
+			} else {
+				print_map(m);
+				m->game_state = E_STATE_PLAY;
+			}
+		}
 		if (sem_unlock(rcs->sem_id) == -1)
 			return -1;
 	} while (still_playing > 1 && !is_sig_received);
 
-	if (is_sig_received) {
-		log_info("Signal received, quitting");
-	} else {
+	if (!is_sig_received) {
 		if (sem_lock(rcs->sem_id) == -1)
 			return -1;
 
-		print_map(m);
 		if ((winner = get_winner(m)) != 0)
 			printf("[ INFO  ] Team %d won the game !\n", winner);
 		else
@@ -142,17 +170,34 @@ int graphic_mode(const struct shrcs *rcs, const struct mapinfo *m)
 int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
 	int ret;
+	int game_state = E_STATE_PLAY;
 
 	log_info("Player mode started");
+	if ((ret = join_game(rcs, m)) < 1)
+		return ret;
 	if (spawn_player(rcs, m, p) == -1)
 		return -1;
-	if ((ret = wait_for_players(rcs, m)) < 1)
-		return ret;
+	if (wait_for_players(rcs, m) == -1)
+		goto err_unspawn_player;
 
-	// char buf[1];
-	// read(1, buf, 1);
+	while (game_state == E_STATE_PLAY && !is_sig_received) {
 
-	return 0;
+		if ((game_state = is_dead(rcs, m, p)) == -1)
+			goto err_unspawn_player;
+		else if (game_state == E_STATE_DEAD)
+			break;
+
+		if ((game_state = move_player(rcs, m, p)) == -1)
+			goto err_unspawn_player;
+	}
+	return 1;
+
+err_unspawn_player:
+	log_err("Game error");
+	sem_lock(rcs->sem_id);
+	unspawn_player(m, p);
+	sem_unlock(rcs->sem_id);
+	return -1;
 }
 
 int main(int ac, char **av)
@@ -176,23 +221,16 @@ int main(int ac, char **av)
 		goto err_clean_all_rcs;
 
 	p.team_id = (unsigned int)team_id;
-	if (!team_id) {
-		if (graphic_mode(&rcs, m) == -1)
-			goto err_clean_all_rcs;
-	} else {
-		if (player_mode(&rcs, m, &p) == -1)
-			goto err_clean_all_rcs;
-	}
-
-	if (p.team_id && unspawn_player(&rcs, m, &p) == -1)
+	if (!team_id && graphic_mode(&rcs, m) == -1)
 		goto err_clean_all_rcs;
+	if (team_id && player_mode(&rcs, m, &p) == -1)
+		goto err_clean_all_rcs;
+
+	if (is_sig_received)
+		log_info("Signal received, quitting");
 	if (clean_shared_rcs(&rcs, E_CLEAN_ALL) < 0)
 		return 1;
 	return 0;
-
-// err_unspawn_player:
-// 	if (p.team_id)
-// 		unspawn_player(&rcs, m, &p);
 
 err_clean_all_rcs:
 	clean_shared_rcs(&rcs, E_CLEAN_ALL);
