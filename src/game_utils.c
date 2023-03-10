@@ -81,8 +81,8 @@ void print_map(const struct mapinfo *m)
 		printf("\x1B[%dA", MAP_NB_ROWS * 2 + 8);
 		fflush(stdout); /* remove previous map from terminal */
 	}
-
-	printf("\nNumber of moves: %ld\n", nb_moves++);
+	
+	printf("\nTurn number: %ld\n", nb_moves++);
 	for (int row = 0; row < MAP_NB_ROWS; ++row) {
 		print_grid_line();
 		print_team_id_line(m, row);

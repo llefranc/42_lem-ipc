@@ -123,7 +123,7 @@ static inline int init_shm(struct shrcs *rcs, struct mapinfo *m)
 		return -1;
 	m = (struct mapinfo *)rcs->shm_addr;
 	m->start_time = t;
-	m->game_state = E_STATE_PLAY;
+	m->game_state = E_STATE_PRINT;
 	if (sem_unlock(rcs->sem_id) == -1)
 		return -1;
 	return 0;
@@ -206,10 +206,10 @@ int clean_shared_rcs(const struct shrcs *rcs, enum clean_step step)
 		switch (step) {
 		case E_CLEAN_ALL:
 			ret += clean_msgq(rcs->msgq_id);
-			__attribute__ ((fallthrough));
+			/* fall through */
 		case E_CLEAN_SHM_SEM:
 			ret += clean_sem(rcs->sem_id);
-			__attribute__ ((fallthrough));
+			/* fall through */
 		case E_CLEAN_SHM:
 			ret += clean_shm(rcs->shm_id);
 			break;

@@ -16,7 +16,7 @@
 #include "shared_rcs.h"
 #include "game_utils.h"
 
-int is_dead(const struct shrcs *rcs, struct mapinfo *m, const struct player *p);
+int is_player_dead(struct mapinfo *m, const struct player *p);
 int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p);
 
 #endif /* MOVE_PLAYER_H */

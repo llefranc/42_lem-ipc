@@ -179,24 +179,28 @@ int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 		return -1;
 	if (wait_for_players(rcs, m) == -1)
 		goto err_unspawn_player;
-
+		
 	while (game_state == E_STATE_PLAY && !is_sig_received) {
 
-		if ((game_state = is_dead(rcs, m, p)) == -1)
+		if (sem_lock(rcs->sem_id) == -1)
 			goto err_unspawn_player;
-		else if (game_state == E_STATE_DEAD)
-			break;
-
-		if ((game_state = move_player(rcs, m, p)) == -1)
-			goto err_unspawn_player;
+		if (m->game_state != E_STATE_PRINT) {
+			if (is_player_dead(m, p))
+				game_state = E_STATE_DEAD;
+			else if ((game_state = move_player(rcs, m, p)) == -1)
+				goto err_unspawn_player_sem_locked;
+		}
+		if (sem_unlock(rcs->sem_id) == -1)
+			goto err_unspawn_player_sem_locked;
 	}
 	return 1;
 
 err_unspawn_player:
-	log_err("Game error");
 	sem_lock(rcs->sem_id);
+err_unspawn_player_sem_locked:
 	unspawn_player(m, p);
 	sem_unlock(rcs->sem_id);
+	log_err("Game error");
 	return -1;
 }
 

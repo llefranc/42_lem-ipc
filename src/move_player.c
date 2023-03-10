@@ -83,9 +83,8 @@ _Bool is_target_reached(const struct mapinfo *m, const struct player *p)
 }
 
 /**
- * is_dead() - Unspawns the player if this one is surrounded by at least 2
- *             ennemies from the same team.
- * @rcs: Contains all information for shared ressources.
+ * is_player_dead() - Unspawns the player if this one is surrounded by at least 2
+ *                    ennemies from the same team.
  * @m: Contains all the map information.
  * @p: Contains the actual player information.
  *
@@ -96,7 +95,7 @@ _Bool is_target_reached(const struct mapinfo *m, const struct player *p)
  *         0 otherwise. Note that if the player is surrounded by 2 ennemies but
  *         not from the same team, the function will return 0.
 */
-int is_dead(const struct shrcs *rcs, struct mapinfo *m, const struct player *p)
+int is_player_dead(struct mapinfo *m, const struct player *p)
 {
 	/* represent up, down, left, and right squares + '\0'*/
 	char squares_tids[5] = {};
@@ -110,9 +109,6 @@ int is_dead(const struct shrcs *rcs, struct mapinfo *m, const struct player *p)
 	int game_state = E_STATE_PLAY;
 	int ennemy_tid;
 
-	if (sem_lock(rcs->sem_id) == -1)
-		return -1;
-
 	for (size_t j = 0; j < sizeof(fptr) / sizeof(*fptr); ++j) {
 
 		ennemy_tid = fptr[j](m, p->pos.row, p->pos.col);
@@ -123,16 +119,14 @@ int is_dead(const struct shrcs *rcs, struct mapinfo *m, const struct player *p)
 	while (squares_tids[++i]) {
 		if (strchr(&squares_tids[i + 1], squares_tids[i]) != NULL) {
 			game_state = E_STATE_DEAD;
-			unspawn_player(m, p);
-			sleep(TIME_BETWEEN_MOVE);
-			m->time_last_move.tv_sec += TIME_BETWEEN_MOVE;
+			
 			break;
 		}
 	}
-	if (sem_unlock(rcs->sem_id) == -1)
-		return -1;
-
 	if (game_state == E_STATE_DEAD) {
+		unspawn_player(m, p);
+		sleep(TIME_BETWEEN_MOVE);
+		m->time_last_move.tv_sec += TIME_BETWEEN_MOVE;
 		printf("[ INFO  ] You died surrounded by 2 ennemies from team "
 				"%d (row %d, col %d)\n", (int)squares_tids[i],
 				p->pos.row + 1, p->pos.col + 1);
@@ -206,16 +200,12 @@ int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 	struct timespec time_elapsed;
 	struct timespec now;
 
-	if (sem_lock(rcs->sem_id) == -1)
-		return -1;
-
 	if (clock_gettime(CLOCK_REALTIME, &now) == -1) {
 		log_syserr("(clock_gettime)");
 		return -1;
 	}
 	time_elapsed = sub_timespec(now, m->time_last_move);
-	if (m->game_state == E_STATE_PLAY && !is_surrounded(m, p) &&
-	    time_elapsed.tv_sec >= TIME_BETWEEN_MOVE) {
+	if (!is_surrounded(m, p) && time_elapsed.tv_sec >= TIME_BETWEEN_MOVE) {
 
 		// printf("istargetreached=%d\n", is_target_reached(m, p));
 
@@ -237,9 +227,6 @@ int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 	} else if (m->game_state == E_STATE_WON) {
 		ret = E_STATE_WON;
 	}
-
-	if (sem_unlock(rcs->sem_id) == -1)
-		return -1;
 	if (ret == E_STATE_WON)
 		log_info("You won the game!");
 	return ret;
