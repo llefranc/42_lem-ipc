@@ -195,7 +195,7 @@ static inline void update_player_pos(struct mapinfo *m, struct player *p,
 
 int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
-	int ret = E_STATE_PLAY;
+	// int ret = E_STATE_PLAY;
 	struct position ennemy_pos;
 	struct timespec time_elapsed;
 	struct timespec now;
@@ -205,7 +205,9 @@ int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 		return -1;
 	}
 	time_elapsed = sub_timespec(now, m->time_last_move);
-	if (!is_surrounded(m, p) && time_elapsed.tv_sec >= TIME_BETWEEN_MOVE) {
+	if (m->game_state == E_STATE_WON) {
+		log_info("You won the game!");
+	} else if (!is_surrounded(m, p) && time_elapsed.tv_sec >= TIME_BETWEEN_MOVE) {
 
 		// printf("istargetreached=%d\n", is_target_reached(m, p));
 
@@ -223,13 +225,8 @@ int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 			update_player_pos(m, p, ennemy_pos);
 		m->time_last_move = now;
 		m->game_state = E_STATE_PRINT;
-
-	} else if (m->game_state == E_STATE_WON) {
-		ret = E_STATE_WON;
 	}
-	if (ret == E_STATE_WON)
-		log_info("You won the game!");
-	return ret;
+	return m->game_state;
 
 err_unlock_sem:
 	sem_unlock(rcs->sem_id);

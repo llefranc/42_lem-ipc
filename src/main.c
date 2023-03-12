@@ -60,28 +60,34 @@ static inline int parse_team_id(int ac, char **av)
 	return (int)team_id;
 }
 
-static int join_game(const struct shrcs *rcs, const struct mapinfo *m)
+static int join_game(const struct shrcs *rcs, struct mapinfo *m, 
+		_Bool is_graphic_mode)
 {
+	int ret = 1;
 	struct timespec res;
 	struct timespec now;
 	struct timespec start_time;
-
-	if (sem_lock(rcs->sem_id) == -1)
-		return -1;
-	start_time = m->start_time;
-	if (sem_unlock(rcs->sem_id) == -1)
-		return -1;
 
 	if (clock_gettime(CLOCK_REALTIME, &now) == -1) {
 		log_syserr("(clock_gettime)");
 		return -1;
 	}
+	if (sem_lock(rcs->sem_id) == -1)
+		return -1;
+	start_time = m->start_time;
 	res = sub_timespec(now, start_time);
 	if (res.tv_sec > SEC_START_TIME) {
 		log_info("Game has already started, impossible to join");
-		return 0;
+		ret = 0;
+	} else if (is_graphic_mode && m->is_graphic_on) {
+		log_info("The graphic process is already launched");
+		ret = 0;
+	} else if (is_graphic_mode) {
+		m->is_graphic_on = 1;
 	}
-	return 1;
+	if (sem_unlock(rcs->sem_id) == -1)
+		return -1;
+	return ret;
 }
 
 static inline int wait_for_players(const struct shrcs *rcs,
@@ -131,14 +137,15 @@ int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
 	int still_playing = 0;
 
 	log_info("Graphic mode started");
-	if ((ret = join_game(rcs, m)) < 1)
+	if ((ret = join_game(rcs, m, 1)) < 1)
 		return ret;
 	if (wait_for_players(rcs, m) == -1)
-		return -1;
+		goto err_exit;
 	do {
+		if (is_sig_received)
+			goto err_exit;
 		if (sem_lock(rcs->sem_id) == -1)
-			return -1;
-
+			goto err_exit;
 		still_playing = nb_teams_in_game(m);
 		if (m->game_state == E_STATE_PRINT) {
 			if (still_playing <= 1) {
@@ -149,22 +156,25 @@ int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
 			}
 		}
 		if (sem_unlock(rcs->sem_id) == -1)
-			return -1;
+			goto err_exit_sem_locked;
 	} while (still_playing > 1 && !is_sig_received);
 
-	if (!is_sig_received) {
-		if (sem_lock(rcs->sem_id) == -1)
-			return -1;
-
-		if ((winner = get_winner(m)) != 0)
-			printf("[ INFO  ] Team %d won the game !\n", winner);
-		else
-			printf("[ INFO  ] Nobody joined the game\n");
-
-		if (sem_unlock(rcs->sem_id) == -1)
-			return -1;
-	}
+	if (sem_lock(rcs->sem_id) == -1)
+		return -1;
+	if ((winner = get_winner(m)) != 0)
+		printf("[ INFO  ] Team %d won the game !\n", winner);
+	else
+		printf("[ INFO  ] Nobody joined the game\n");
+	if (sem_unlock(rcs->sem_id) == -1)
+		return -1;
 	return 0;
+
+err_exit:
+	sem_lock(rcs->sem_id);
+err_exit_sem_locked:
+	m->is_graphic_on = 0;
+	sem_unlock(rcs->sem_id);
+	return -1;
 }
 
 int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
@@ -173,17 +183,20 @@ int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 	int game_state = E_STATE_PLAY;
 
 	log_info("Player mode started");
-	if ((ret = join_game(rcs, m)) < 1)
+	if ((ret = join_game(rcs, m, 0)) < 1)
 		return ret;
 	if (spawn_player(rcs, m, p) == -1)
 		return -1;
 	if (wait_for_players(rcs, m) == -1)
 		goto err_unspawn_player;
 		
-	while (game_state == E_STATE_PLAY && !is_sig_received) {
-
+	while (game_state == E_STATE_PLAY || game_state == E_STATE_PRINT) {
+		if (is_sig_received)
+			goto err_unspawn_player;
 		if (sem_lock(rcs->sem_id) == -1)
 			goto err_unspawn_player;
+		if (!m->is_graphic_on)
+			goto err_no_graphic_mode;
 		if (m->game_state != E_STATE_PRINT) {
 			if (is_player_dead(m, p))
 				game_state = E_STATE_DEAD;
@@ -194,6 +207,11 @@ int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 			goto err_unspawn_player_sem_locked;
 	}
 	return 1;
+
+err_no_graphic_mode:
+	sem_unlock(rcs->sem_id);
+	log_err("The graphic process isn't running");
+	return -1;
 
 err_unspawn_player:
 	sem_lock(rcs->sem_id);

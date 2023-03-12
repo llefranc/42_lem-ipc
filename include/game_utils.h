@@ -17,7 +17,7 @@
 #define NB_TEAMS_MAX 7 /* because 7 ascii colors */
 #define MAP_NB_ROWS 5
 #define MAP_NB_COLS 5
-#define SEC_START_TIME 30
+#define SEC_START_TIME 10
 
 #include <time.h>
 
@@ -45,6 +45,7 @@ struct position {
 /**
  * struct mapinfo - Contains all the map information.
  * @game_state: The current state of the game.
+ * @is_graphic_on: 1 if the graphic process is running, 0 otherwise.
  * @start_time: The time at which the first process joined the game (either in
  *              player mode or graphic mode).
  * @time_last_move: The time at which the last player move occured.
@@ -57,6 +58,7 @@ struct position {
 */
 struct mapinfo {
 	int game_state;
+	_Bool is_graphic_on;
 	struct timespec start_time;
 	struct timespec time_last_move;
 	unsigned int nbp;
