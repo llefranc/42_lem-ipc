@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:42:47 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/06 17:50:05 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/13 13:58:50 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,6 +111,9 @@ int get_shared_rcs(struct shrcs *rcs, key_t key, size_t shmsize)
 	return 0;
 }
 
+/**
+ * Init shared memory segment.
+*/
 static inline int init_shm(struct shrcs *rcs, struct mapinfo *m)
 {
 	struct timespec t;

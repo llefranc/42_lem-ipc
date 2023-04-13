@@ -1,27 +1,29 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   game_utils.h                                             :+:      :+:    :+:   */
+/*   game_utils.h                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 18:28:07 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/02 15:45:15 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/13 14:38:00 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef GAME_UTILS_H
 #define GAME_UTILS_H
 
-#define NB_PLAYERS_MAX 9
-#define NB_TEAMS_MAX 7 /* because 7 ascii colors */
-#define MAP_NB_ROWS 5
-#define MAP_NB_COLS 5
-#define SEC_START_TIME 10
-
 #include <time.h>
 
 #include "../include/shared_rcs.h"
+
+/* because 7 ascii colors to print team in different colors */
+#define NB_TEAMS_MAX 7
+
+#define NB_PLAYERS_MAX 9
+#define MAP_NB_ROWS 5
+#define MAP_NB_COLS 5
+#define SEC_START_TIME 30
 
 struct shrcs;
 

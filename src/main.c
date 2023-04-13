@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/10 13:30:00 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/13 15:01:11 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,9 @@ static inline int setup_sighandlers(void)
 	return 0;
 }
 
+/**
+ * Parse the first argument of lemipc which is team_id.
+*/
 static inline int parse_team_id(int ac, char **av)
 {
 	long team_id = 0;
@@ -60,7 +63,10 @@ static inline int parse_team_id(int ac, char **av)
 	return (int)team_id;
 }
 
-static int join_game(const struct shrcs *rcs, struct mapinfo *m, 
+/**
+ * Try to join the game by checking if the game has already started or not.
+*/
+static int join_game(const struct shrcs *rcs, struct mapinfo *m,
 		_Bool is_graphic_mode)
 {
 	int ret = 1;
@@ -90,6 +96,10 @@ static int join_game(const struct shrcs *rcs, struct mapinfo *m,
 	return ret;
 }
 
+/**
+ * Wait SEC_START_TIME by printing the countdown on screen. Other players can
+ * during this time join the game.
+*/
 static inline int wait_for_players(const struct shrcs *rcs,
 		const struct mapinfo *m)
 {
@@ -130,6 +140,9 @@ static inline int wait_for_players(const struct shrcs *rcs,
 	return 0;
 }
 
+/**
+ * Display the map, refreshing it each time a player moves or dies.
+*/
 int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
 {
 	int ret;
@@ -177,6 +190,9 @@ err_exit_sem_locked:
 	return -1;
 }
 
+/**
+ * Move the player towards ennemies until he dies or win.
+*/
 int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
 	int ret;
@@ -189,7 +205,7 @@ int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 		return -1;
 	if (wait_for_players(rcs, m) == -1)
 		goto err_unspawn_player;
-		
+
 	while (game_state == E_STATE_PLAY || game_state == E_STATE_PRINT) {
 		if (is_sig_received)
 			goto err_unspawn_player;
@@ -222,6 +238,10 @@ err_unspawn_player_sem_locked:
 	return -1;
 }
 
+/**
+ * Init the shared ressources, and then launch graphic mode (which display the
+ * map) if team_id == 0, otherwise launch player mode.
+*/
 int main(int ac, char **av)
 {
 	key_t key;

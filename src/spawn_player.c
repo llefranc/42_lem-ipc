@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:27:54 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/10 13:16:35 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/13 14:53:33 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,47 +18,51 @@
 
 #include "../include/log.h"
 
+
 /**
  * is_valid_spawn() - Checks if a player can spawn on a square from the grid.
  * @m: Contains all the map information.
- * @row: Row number of the map.
- * @col: Col number of the map.
+ * @spawn_r: Row number of the map.
+ * @spawn_c: Col number of the map.
  *
- * To be a valid spawn, the square must be surrounded by no other player (up,
- * down, left and right).
+ * To be a valid spawn, the square must be empty and surrounded by no other
+ * player. Ex (where x is the empty square to spawn):
+ *     0 0 0
+ *     0 x 0
+ *     0 0 0
  *
  * Return: 1 if the spawn is valid, 0 otherwise.
 */
-static _Bool is_valid_spawn(const struct mapinfo *m, int row, int col)
+static _Bool is_valid_spawn(const struct mapinfo *m, int spawn_r, int spawn_c)
 {
-	_Bool up = 1;
-	_Bool down = 1;
-	_Bool left = 1;
-	_Bool right = 1;
+	if (!(spawn_r >= 0 && spawn_r < MAP_NB_ROWS) ||
+	    !(spawn_c >= 0 && spawn_c < MAP_NB_COLS))
+		return 0;
 
-	if (col - 1 >= 0)
-		left = !get_id(m, row, col - 1);
-	if (col + 1 < MAP_NB_COLS)
-		right = !get_id(m, row, col + 1);
+	for (int row = spawn_r - 1; row <= spawn_r + 1; ++row) {
+		if (!(row >= 0 && row < MAP_NB_ROWS))
+			continue;
+		for (int col = spawn_c - 1; col <= spawn_c + 1; ++col) {
+			if (!(col >= 0 && col < MAP_NB_COLS))
+				continue;
+			if (get_id(m, row, col) != 0)
+				return 0;
+		}
 
-	if (row - 1 >= 0)
-		up = !get_id(m, row - 1, col);
-	if (row + 1 < MAP_NB_ROWS)
-		down = !get_id(m, row + 1, col);
-
-	return !get_id(m, row, col) && up && down && left && right;
+	}
+	return 1;
 }
 
 /**
  * find_spawn_pos() - Finds a valid spawn position.
  * @m: Contains all the map information.
  *
- * Tries to find a valid (i.e not surrounded by any other player in up, down,
- * left and right position) random spawn x times (x = MAP_NB_ROWS *
- * MAP_NB_COLS). If no random spawn is found after x times, then iterates
- * through and checks all squares.
+ * Tries to find a valid (i.e not surrounded by any other player) random
+ * spawn x times (x = MAP_NB_ROWS * MAP_NB_COLS). If no random spawn is found
+ * after x times, then iterates through the map and checks all squares.
  *
- * Return: A valid position if a spawn was found, a position of -1,-1 otherwise.
+ * Return: A valid position if a spawn was found, a position of (-1,-1)
+ * 	   otherwise.
 */
 static struct position find_spawn_pos(struct mapinfo *m)
 {
@@ -103,8 +107,7 @@ static inline void spawn_update_map(struct mapinfo *m, const struct player *p)
  * Spawns a player on the grid if there is a square available (i.e. with no
  * other player at left, right, up and down position). For odd team, it will
  * start to look for an available square from the top of the map; for pair team
- * it will start to look from the bottom.
- * If there is a position available, then:
+ * it will start to look from the bottom. If there is a position available then:
  *     - Look for a potential ennemy to target
  *     - Updates the map information
  *     - Updates the player information
