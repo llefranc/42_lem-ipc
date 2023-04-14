@@ -1,22 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   move_player.h                                      :+:      :+:    :+:   */
+/*   game_mode.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/03/02 15:51:26 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/10 12:22:42 by llefranc         ###   ########.fr       */
+/*   Created: 2023/04/14 19:57:58 by llefranc          #+#    #+#             */
+/*   Updated: 2023/04/14 20:03:23 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef MOVE_PLAYER_H
-#define MOVE_PLAYER_H
+#ifndef GAME_MODE_H
+#define GAME_MODE_H
 
 #include "shared_rcs.h"
 #include "game_utils.h"
 
-int is_player_dead(struct mapinfo *m, const struct player *p);
-int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p);
+int graphic_mode(const struct shrcs *rcs, struct mapinfo *m);
+int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p);
 
-#endif /* MOVE_PLAYER_H */
+#endif /* GAME_MODE_H */

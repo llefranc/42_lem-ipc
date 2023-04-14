@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:39:35 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/14 18:56:49 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 19:52:29 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ struct mapinfo;
  * is locking the semaphore and no other process can access the shared memory
  * segment until this process unlock it.
 */
-extern volatile _Bool g_is_sem_locked;
+extern _Bool g_is_sem_locked;
 
 /**
  * enum clean_step - Describes which System V shared ressources needs to be

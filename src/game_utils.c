@@ -6,9 +6,14 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/28 16:06:56 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/14 17:46:39 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 20:10:22 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#include "../include/game_utils.h"
+
+#include "../include/log.h"
+#include "../include/shared_rcs.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -18,11 +23,6 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-
-#include "../include/game_utils.h"
-
-#include "../include/log.h"
-#include "../include/shared_rcs.h"
 
 #define NS_PER_SECOND 1000000000
 

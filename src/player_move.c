@@ -1,18 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   move_player.c                                      :+:      :+:    :+:   */
+/*   player_move.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:49:33 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/14 19:13:02 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 19:56:50 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/move_player.h"
+#include "../include/player_move.h"
 
-#include "../include/spawn_player.h"
+#include "../include/player_spawn.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -20,28 +20,28 @@
 
 #define TIME_BETWEEN_MOVE 1
 
-static inline void move_player_left(struct mapinfo *m, struct player *p)
+static inline void player_move_left(struct mapinfo *m, struct player *p)
 {
 	set_id(m, p->pos.row, p->pos.col, 0);
 	p->pos.col--;
 	set_id(m, p->pos.row, p->pos.col, p->id);
 }
 
-static inline void move_player_right(struct mapinfo *m, struct player *p)
+static inline void player_move_right(struct mapinfo *m, struct player *p)
 {
 	set_id(m, p->pos.row, p->pos.col, 0);
 	p->pos.col++;
 	set_id(m, p->pos.row, p->pos.col, p->id);
 }
 
-static inline void move_player_up(struct mapinfo *m, struct player *p)
+static inline void player_move_up(struct mapinfo *m, struct player *p)
 {
 	set_id(m, p->pos.row, p->pos.col, 0);
 	p->pos.row--;
 	set_id(m, p->pos.row, p->pos.col, p->id);
 }
 
-static inline void move_player_down(struct mapinfo *m, struct player *p)
+static inline void player_move_down(struct mapinfo *m, struct player *p)
 {
 	set_id(m, p->pos.row, p->pos.col, 0);
 	p->pos.row++;
@@ -140,7 +140,7 @@ int is_player_dead(struct mapinfo *m, const struct player *p)
 		}
 	}
 	if (game_state == E_STATE_DEAD) {
-		unspawn_player(m, p);
+		player_unspawn(m, p);
 		sleep(TIME_BETWEEN_MOVE);
 		m->time_last_move.tv_sec += TIME_BETWEEN_MOVE;
 		printf("[ INFO  ] You died surrounded by 2 ennemies from team "
@@ -161,18 +161,18 @@ static inline void random_move(struct mapinfo *m, struct player *p)
 		&get_up_team_id,
 		&get_down_team_id
 	};
-	void (*fptr_move_player[4])(struct mapinfo *, struct player *) = {
-		&move_player_left,
-		&move_player_right,
-		&move_player_up,
-		&move_player_down
+	void (*fptr_player_move[4])(struct mapinfo *, struct player *) = {
+		&player_move_left,
+		&player_move_right,
+		&player_move_up,
+		&player_move_down
 	};
 	int i;
 
 	do {
-		i = rand() % 4; /* rand was seeded in spawn_player() */
+		i = rand() % 4; /* rand was seeded in player_spawn() */
 	} while (fptr_get_team_id[i](m, p->pos.row, p->pos.col) != 0);
-	fptr_move_player[i](m, p);
+	fptr_player_move[i](m, p);
 }
 
 static inline void update_player_pos(struct mapinfo *m, struct player *p,
@@ -181,7 +181,7 @@ static inline void update_player_pos(struct mapinfo *m, struct player *p,
 	int i = 0;
 	int move_row = ennemy_pos.row - p->pos.row;
 	int move_col = ennemy_pos.col - p->pos.col;
-	void (*fptr_move_player[2])(struct mapinfo *, struct player *) = {};
+	void (*fptr_player_move[2])(struct mapinfo *, struct player *) = {};
 
 	printf("[ INFO  ] Player moved (row %d, col %d) => ", p->pos.row + 1,
 	       p->pos.col + 1);
@@ -191,28 +191,28 @@ static inline void update_player_pos(struct mapinfo *m, struct player *p,
 		move_col = 0;
 
 	if (move_row > 0 && !get_id(m, p->pos.row + 1, p->pos.col))
-		fptr_move_player[i++] = &move_player_down;
+		fptr_player_move[i++] = &player_move_down;
 	if (move_row < 0 && !get_id(m, p->pos.row - 1, p->pos.col))
-		fptr_move_player[i++] = move_player_up;
+		fptr_player_move[i++] = player_move_up;
 	if (move_col > 0 && !get_id(m, p->pos.row, p->pos.col + 1))
-		fptr_move_player[i++] = move_player_right;
+		fptr_player_move[i++] = player_move_right;
 	if (move_col < 0 && !get_id(m, p->pos.row, p->pos.col - 1))
-		fptr_move_player[i++] = move_player_left;
+		fptr_player_move[i++] = player_move_left;
 
 	// ajouter ici une notion de last move
 
 	if (i == 1) {
-		fptr_move_player[0](m, p);
+		fptr_player_move[0](m, p);
 	} else if (i == 2) {
 		i = rand() % 2;
-		fptr_move_player[i](m, p);
+		fptr_player_move[i](m, p);
 	} else {
 		random_move(m, p);
 	}
 	printf("(row %d, col %d)\n", p->pos.row + 1, p->pos.col + 1);
 }
 
-int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
+int player_move(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
 	// int ret = E_STATE_PLAY;
 	struct position ennemy_pos;

@@ -6,17 +6,17 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:42:47 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/13 16:59:51 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 20:10:46 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#include "../include/shared_rcs.h"
+#include "../include/game_utils.h"
 
 #include <unistd.h>
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include <time.h>
-
-#include "../include/shared_rcs.h"
-#include "../include/game_utils.h"
 
 /**
  * keygen() - Generates a System V key.

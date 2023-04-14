@@ -1,23 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   spawn_player.c                                     :+:      :+:    :+:   */
+/*   player_spawn.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:27:54 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/14 17:49:33 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 20:10:05 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#include "../include/player_spawn.h"
+
+#include "../include/log.h"
 
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "../include/spawn_player.h"
-
-#include "../include/log.h"
-
 
 /**
  * is_valid_spawn() - Checks if a player can spawn on a square from the grid.
@@ -98,7 +97,7 @@ static inline void spawn_update_map(struct mapinfo *m, const struct player *p)
 }
 
 /**
- * spawn_player() - Spawns a player on the grid.
+ * player_spawn() - Spawns a player on the grid.
  * @rcs: Contains all information for shared ressources.
  * @m: Contains all the map information.
  * @p: Contains the actual player information.
@@ -113,7 +112,7 @@ static inline void spawn_update_map(struct mapinfo *m, const struct player *p)
  *
  * Return: 0 on success, -1 if an error occured.
 */
-int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
+int player_spawn(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
 	if (sem_lock(rcs->sem_id) == -1)
 		return -1;
