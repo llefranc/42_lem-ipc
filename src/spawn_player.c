@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:27:54 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/13 14:53:33 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/13 17:24:59 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,6 @@ static _Bool is_valid_spawn(const struct mapinfo *m, int spawn_r, int spawn_c)
 			if (get_id(m, row, col) != 0)
 				return 0;
 		}
-
 	}
 	return 1;
 }
@@ -118,7 +117,7 @@ int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
 	if (sem_lock(rcs->sem_id) == -1)
 		return -1;
-	srand(m->start_time.tv_sec);
+	srand(time(NULL));
 
 	if (get_nb_players_in_team(m, p) + 1 > NB_PLAYERS_MAX) {
 		log_err("Too many players in this team");

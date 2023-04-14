@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/13 15:01:11 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 17:19:52 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,6 +96,24 @@ static int join_game(const struct shrcs *rcs, struct mapinfo *m,
 	return ret;
 }
 
+static inline int check_nb_players(const struct shrcs *rcs,
+				   const struct mapinfo *m)
+{
+	int maxNbPlayer = 0;
+
+	if (sem_lock(rcs->sem_id) == -1)
+		return -1;
+	for (int team_nb = 0; team_nb < NB_TEAMS_MAX; ++team_nb) {
+		if (m->nbp_team[team_nb] > maxNbPlayer)
+			maxNbPlayer = m->nbp_team[team_nb];
+	}
+	if (sem_unlock(rcs->sem_id) == -1)
+		return -1;
+	if (maxNbPlayer < 2)
+		return -1;
+	return 0;
+}
+
 /**
  * Wait SEC_START_TIME by printing the countdown on screen. Other players can
  * during this time join the game.
@@ -136,6 +154,11 @@ static inline int wait_for_players(const struct shrcs *rcs,
 	printf("\n");
 	if (is_sig_received)
 		return -1;
+
+	if (check_nb_players(rcs, m) == -1) {
+		log_err("Only teams with one player");
+		return -1;
+	}
 	log_info("Launching game!");
 	return 0;
 }
@@ -148,12 +171,25 @@ int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
 	int ret;
 	int winner = 0;
 	int still_playing = 0;
+	struct timespec now;
 
 	log_info("Graphic mode started");
 	if ((ret = join_game(rcs, m, 1)) < 1)
 		return ret;
 	if (wait_for_players(rcs, m) == -1)
 		goto err_exit;
+
+	if (sem_lock(rcs->sem_id) == -1)
+		goto err_exit;
+	if (clock_gettime(CLOCK_REALTIME, &now) == -1) {
+		log_syserr("(clock_gettime)");
+		goto err_exit_sem_locked;
+		return -1;
+	}
+	m->time_last_move = now;
+	if (sem_unlock(rcs->sem_id) == -1)
+		goto err_exit_sem_locked;
+
 	do {
 		if (is_sig_received)
 			goto err_exit;

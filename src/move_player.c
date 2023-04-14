@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:49:33 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/10 15:04:41 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 17:20:17 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,8 +83,38 @@ _Bool is_target_reached(const struct mapinfo *m, const struct player *p)
 }
 
 /**
- * is_player_dead() - Unspawns the player if this one is surrounded by at least 2
- *                    ennemies from the same team.
+ * Fill the buffer with team ids of ennemies surrounding the player. Ex (where
+ * x is the player) :
+ *     2 0 0
+ *     0 x 4   ->>> Will fill the buffer with 2,4,3,2.
+ *     3 2 0
+*/
+static inline void find_surrounding_ennemies(struct mapinfo *m,
+					     const struct player *p,
+					     char *squares_tids)
+{
+	int i = -1;
+	char ennemy_tid;
+
+	for (int row = p->pos.row - 1; row <= p->pos.row + 1; ++row) {
+		if (!(row >= 0 && row < MAP_NB_ROWS))
+			continue;
+		for (int col = p->pos.col - 1; col <= p->pos.col + 1; ++col) {
+			if (!(col >= 0 && col < MAP_NB_COLS))
+				continue;
+			if (row == p->pos.row && col == p->pos.col)
+				continue;
+
+			ennemy_tid = (char)get_id(m, row, col);
+			if (ennemy_tid > 0 && (char)p->team_id != ennemy_tid)
+				squares_tids[++i] = ennemy_tid;
+		}
+	}
+}
+
+/**
+ * is_player_dead() - Unspawn the player if this one is surrounded by at least
+ *                    2 ennemies from the same team.
  * @m: Contains all the map information.
  * @p: Contains the actual player information.
  *
@@ -97,29 +127,15 @@ _Bool is_target_reached(const struct mapinfo *m, const struct player *p)
 */
 int is_player_dead(struct mapinfo *m, const struct player *p)
 {
-	/* represent up, down, left, and right squares + '\0'*/
-	char squares_tids[5] = {};
-	int (*fptr[4])(const struct mapinfo *, int, int) = {
-		&get_left_team_id,
-		&get_right_team_id,
-		&get_up_team_id,
-		&get_down_team_id,
-	};
+	/* represent squares around player position + '\0'*/
+	char squares_tids[9] = {};
 	int i = -1;
 	int game_state = E_STATE_PLAY;
-	int ennemy_tid;
 
-	for (size_t j = 0; j < sizeof(fptr) / sizeof(*fptr); ++j) {
-
-		ennemy_tid = fptr[j](m, p->pos.row, p->pos.col);
-		if (ennemy_tid > 0 && (int)p->team_id != ennemy_tid)
-			squares_tids[++i] = (char)ennemy_tid;
-	}
-	i = -1;
+	find_surrounding_ennemies(m, p, squares_tids);
 	while (squares_tids[++i]) {
 		if (strchr(&squares_tids[i + 1], squares_tids[i]) != NULL) {
 			game_state = E_STATE_DEAD;
-			
 			break;
 		}
 	}
@@ -134,6 +150,9 @@ int is_player_dead(struct mapinfo *m, const struct player *p)
 	return game_state;
 }
 
+/**
+ * Do a random move on an empty square (can be left, right, up or down).
+*/
 static inline void random_move(struct mapinfo *m, struct player *p)
 {
 	int (*fptr_get_team_id[4])(const struct mapinfo *, int, int) = {
@@ -159,38 +178,37 @@ static inline void random_move(struct mapinfo *m, struct player *p)
 static inline void update_player_pos(struct mapinfo *m, struct player *p,
 		struct position ennemy_pos)
 {
+	int i = 0;
 	int move_row = ennemy_pos.row - p->pos.row;
 	int move_col = ennemy_pos.col - p->pos.col;
+	void (*fptr_move_player[2])(struct mapinfo *, struct player *) = {};
 
-	printf("Player teamid=%u, id=%u || targteamid=%u, targid=%u\n", p->team_id, p->id, (unsigned int)((char)p->targ_id), p->targ_id);
-
-	// printf("enn pos: row=%d, col=%d\n", ennemy_pos.row, ennemy_pos.col);
-	// printf("old pos: row=%d, col=%d\n", p->pos.row, p->pos.col);
-	// printf("move_row = %d, move_col = %d\n", move_row, move_col);
-
-	/* if dist is 1 == ennemy is next square, no need to move */ // >> to remove
 	if (p->pos.row + move_row < 0 || p->pos.row + move_row >= MAP_NB_ROWS)
 		move_row = 0;
 	if (p->pos.col + move_col < 0 || p->pos.col + move_col >= MAP_NB_COLS)
 		move_col = 0;
 
-	// printf("move_row = %d, move_col = %d\n", move_row, move_col);
-
-	printf("[ INFO  ] Player moved (row %d, col %d) => ", p->pos.row + 1,
-			p->pos.col + 1);
-
 	if (move_row > 0 && !get_id(m, p->pos.row + 1, p->pos.col))
-		move_player_down(m, p);
-	else if (move_row < 0 && !get_id(m, p->pos.row - 1, p->pos.col))
-		move_player_up(m, p);
-	else if (move_col > 0 && !get_id(m, p->pos.row, p->pos.col + 1))
-		move_player_right(m, p);
-	else if (move_col < 0 && !get_id(m, p->pos.row, p->pos.col - 1))
-		move_player_left(m, p);
-	else
-		random_move(m, p);
+		fptr_move_player[i++] = &move_player_down;
+	if (move_row < 0 && !get_id(m, p->pos.row - 1, p->pos.col))
+		fptr_move_player[i++] = move_player_up;
+	if (move_col > 0 && !get_id(m, p->pos.row, p->pos.col + 1))
+		fptr_move_player[i++] = move_player_right;
+	if (move_col < 0 && !get_id(m, p->pos.row, p->pos.col - 1))
+		fptr_move_player[i++] = move_player_left;
 
-	printf(" (row %d, col %d)\n", p->pos.row + 1, p->pos.col + 1);
+	// ajouter ici une notion de last move
+
+	if (i == 1) {
+		fptr_move_player[0](m, p);
+	} else if (i == 2) {
+		i = rand() % 2;
+		fptr_move_player[i](m, p);
+	} else {
+		random_move(m, p);
+	}
+	printf("[ INFO  ] Player moved (row %d, col %d) => ", p->pos.row + 1,
+	       p->pos.col + 1);
 }
 
 int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
@@ -207,7 +225,9 @@ int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 	time_elapsed = sub_timespec(now, m->time_last_move);
 	if (m->game_state == E_STATE_WON) {
 		log_info("You won the game!");
-	} else if (!is_surrounded(m, p) && time_elapsed.tv_sec >= TIME_BETWEEN_MOVE) {
+	// } else if (!is_surrounded(m, p) && !is_target_reached(m, p) &&
+	} else if (!is_surrounded(m, p)  &&
+		   time_elapsed.tv_sec >= TIME_BETWEEN_MOVE) {
 
 		// printf("istargetreached=%d\n", is_target_reached(m, p));
 

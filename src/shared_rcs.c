@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:42:47 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/13 13:58:50 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/13 16:59:51 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,8 @@ static inline int clean_shm(int shm_id)
 {
 	int ret;
 
-	if ((ret = shmctl(shm_id, IPC_RMID, NULL)) == -1)
-		log_syserr("(shmctl - IPC_RMID)");
-	else
+	ret = shmctl(shm_id, IPC_RMID, NULL);
+	if (ret != -1)
 		log_verb("Shared memory segment marked for destroy");
 	return ret;
 }
@@ -54,9 +53,8 @@ static inline int clean_sem(int sem_id)
 {
 	int ret;
 
-	if ((ret = semctl(sem_id, 0, IPC_RMID)) == -1)
-		log_syserr("(semctl - IPC_RMID)");
-	else
+	ret = semctl(sem_id, 0, IPC_RMID);
+	if (ret != -1)
 		log_verb("Semaphore set removed");
 	return ret;
 }
@@ -65,9 +63,8 @@ static inline int clean_msgq(int msgq_id)
 {
 	int ret;
 
-	if ((ret = msgctl(msgq_id, IPC_RMID, NULL)) == -1)
-		log_syserr("(msgctl - IPC_RMID)");
-	else
+	ret = msgctl(msgq_id, IPC_RMID, NULL);
+	if (ret != -1)
 		log_verb("Message queue removed");
 	return ret;
 }

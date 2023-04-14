@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 18:28:07 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/13 14:38:00 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/13 18:03:42 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,9 @@
 #define NB_TEAMS_MAX 7
 
 #define NB_PLAYERS_MAX 9
-#define MAP_NB_ROWS 5
-#define MAP_NB_COLS 5
-#define SEC_START_TIME 30
+#define MAP_NB_ROWS 8
+#define MAP_NB_COLS 8
+#define SEC_START_TIME 20
 
 struct shrcs;
 

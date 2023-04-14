@@ -6,7 +6,7 @@
 #    By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/01/30 11:53:43 by llefranc          #+#    #+#              #
-#    Updated: 2023/03/03 09:21:06 by llefranc         ###   ########.fr        #
+#    Updated: 2023/04/13 16:28:54 by llefranc         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,13 +16,18 @@ FLAGS		=	-O2 -Wall -Werror -Wextra
 FLAGS_DEBUG	=	-g -fsanitize=address -Wall -Werror -Wextra -DDEBUG
 
 SRCS		=	main.c shared_rcs.c game_utils.c spawn_player.c move_player.c
-PATH_SRCS	=	src/
 OBJS		=	$(SRCS:.c=.o)
+PATH_SRCS	=	src/
+
+HEADS		=	game_utils.h log.h move_player.h shared_rcs.h spawn_player.h
+PATH_HEADS	=	include/
 
 all		:	$(NAME)
 
 debug		:	FLAGS = $(FLAGS_DEBUG)
 debug		:	re
+
+$(addprefix $(PATH_SRCS), $(OBJS)): $(addprefix $(PATH_HEADS), $(HEADS))
 
 $(NAME)		:	$(addprefix $(PATH_SRCS), $(OBJS))
 				$(CC) -o $(NAME) $(FLAGS) $(addprefix $(PATH_SRCS), $(OBJS))
