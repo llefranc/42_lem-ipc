@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 18:28:07 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/13 18:03:42 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 18:24:39 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,8 @@ struct player {
  *
  * Return: The number of players in the player team (actual player include).
 */
-static inline int get_nb_players_in_team(const struct mapinfo *m, const struct player *p)
+static inline int get_nb_players_in_team(const struct mapinfo *m,
+					 const struct player *p)
 {
 	return m->nbp_team[p->team_id - 1];
 }
@@ -145,7 +146,8 @@ static inline unsigned int get_down_id(const struct mapinfo *m, int row,
 	return -1;
 }
 
-static inline unsigned int get_team_id(const struct mapinfo *m, int row, int col)
+static inline unsigned int get_team_id(const struct mapinfo *m, int row,
+				       int col)
 {
 	return (unsigned char)m->map[row][col];
 }
@@ -199,6 +201,6 @@ int update_player_target(const struct shrcs *rcs, const struct mapinfo *m,
 struct position find_player_pos(const struct mapinfo *m, unsigned int id);
 int nb_teams_in_game(const struct mapinfo *m);
 int nb_players_in_game(const struct mapinfo *m);
-int get_winner(const struct mapinfo *m);
+int get_winner_team_id(const struct mapinfo *m);
 
 #endif /* GAME_UTILS_H */

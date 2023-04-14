@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/02 19:51:01 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/14 17:19:52 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 19:12:36 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #include "../include/move_player.h"
 
 static _Bool is_sig_received = 0;
+volatile _Bool g_is_sem_locked = 0;
 
 static void sighandler(int signum)
 {
@@ -69,7 +70,6 @@ static inline int parse_team_id(int ac, char **av)
 static int join_game(const struct shrcs *rcs, struct mapinfo *m,
 		_Bool is_graphic_mode)
 {
-	int ret = 1;
 	struct timespec res;
 	struct timespec now;
 	struct timespec start_time;
@@ -84,16 +84,16 @@ static int join_game(const struct shrcs *rcs, struct mapinfo *m,
 	res = sub_timespec(now, start_time);
 	if (res.tv_sec > SEC_START_TIME) {
 		log_info("Game has already started, impossible to join");
-		ret = 0;
+		return -1;
 	} else if (is_graphic_mode && m->is_graphic_on) {
 		log_info("The graphic process is already launched");
-		ret = 0;
+		return -1;
 	} else if (is_graphic_mode) {
 		m->is_graphic_on = 1;
 	}
 	if (sem_unlock(rcs->sem_id) == -1)
 		return -1;
-	return ret;
+	return 0;
 }
 
 static inline int check_nb_players(const struct shrcs *rcs,
@@ -164,31 +164,55 @@ static inline int wait_for_players(const struct shrcs *rcs,
 }
 
 /**
- * Display the map, refreshing it each time a player moves or dies.
+ * Init time_last_move at the beggining of the game.
 */
-int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
+static inline int init_time_last_move(const struct shrcs *rcs,
+				      struct mapinfo *m)
 {
-	int ret;
-	int winner = 0;
-	int still_playing = 0;
 	struct timespec now;
 
-	log_info("Graphic mode started");
-	if ((ret = join_game(rcs, m, 1)) < 1)
-		return ret;
-	if (wait_for_players(rcs, m) == -1)
-		goto err_exit;
-
 	if (sem_lock(rcs->sem_id) == -1)
-		goto err_exit;
+		return -1;
 	if (clock_gettime(CLOCK_REALTIME, &now) == -1) {
 		log_syserr("(clock_gettime)");
-		goto err_exit_sem_locked;
 		return -1;
 	}
 	m->time_last_move = now;
 	if (sem_unlock(rcs->sem_id) == -1)
-		goto err_exit_sem_locked;
+		return -1;
+	return 0;
+}
+
+/**
+ * Print the team number of the team who is
+*/
+static inline int display_winner(const struct shrcs *rcs, struct mapinfo *m)
+{
+	int winner = 0;
+
+	if (sem_lock(rcs->sem_id) == -1)
+		return -1;
+	if ((winner = get_winner_team_id(m)) != 0)
+		printf("[ INFO  ] Team %d won the game !\n", winner);
+	else
+		printf("[ INFO  ] Nobody joined the game\n");
+	if (sem_unlock(rcs->sem_id) == -1)
+		return -1;
+	return 0;
+}
+
+/**
+ * Display the map, refreshing it each time a player moves or dies.
+*/
+int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
+{
+	int still_playing = 0;
+
+	log_info("Graphic mode started");
+	if ((join_game(rcs, m, 1) == -1) || (wait_for_players(rcs, m) == -1))
+		goto err_exit;
+	if (init_time_last_move(rcs, m) == -1)
+		goto err_exit;
 
 	do {
 		if (is_sig_received)
@@ -205,22 +229,16 @@ int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
 			}
 		}
 		if (sem_unlock(rcs->sem_id) == -1)
-			goto err_exit_sem_locked;
+			goto err_exit;
 	} while (still_playing > 1 && !is_sig_received);
 
-	if (sem_lock(rcs->sem_id) == -1)
-		return -1;
-	if ((winner = get_winner(m)) != 0)
-		printf("[ INFO  ] Team %d won the game !\n", winner);
-	else
-		printf("[ INFO  ] Nobody joined the game\n");
-	if (sem_unlock(rcs->sem_id) == -1)
-		return -1;
+	if (display_winner(rcs, m) == -1)
+		goto err_exit;
 	return 0;
 
 err_exit:
-	sem_lock(rcs->sem_id);
-err_exit_sem_locked:
+	if (!g_is_sem_locked)
+		sem_lock(rcs->sem_id);
 	m->is_graphic_on = 0;
 	sem_unlock(rcs->sem_id);
 	return -1;
@@ -231,13 +249,10 @@ err_exit_sem_locked:
 */
 int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
-	int ret;
 	int game_state = E_STATE_PLAY;
 
 	log_info("Player mode started");
-	if ((ret = join_game(rcs, m, 0)) < 1)
-		return ret;
-	if (spawn_player(rcs, m, p) == -1)
+	if (((join_game(rcs, m, 0)) == -1) || (spawn_player(rcs, m, p) == -1))
 		return -1;
 	if (wait_for_players(rcs, m) == -1)
 		goto err_unspawn_player;
@@ -247,30 +262,26 @@ int player_mode(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 			goto err_unspawn_player;
 		if (sem_lock(rcs->sem_id) == -1)
 			goto err_unspawn_player;
-		if (!m->is_graphic_on)
-			goto err_no_graphic_mode;
+		if (!m->is_graphic_on) {
+			log_err("The graphic process isn't running");
+			return -1;
+		}
 		if (m->game_state != E_STATE_PRINT) {
 			if (is_player_dead(m, p))
 				game_state = E_STATE_DEAD;
 			else if ((game_state = move_player(rcs, m, p)) == -1)
-				goto err_unspawn_player_sem_locked;
+				goto err_unspawn_player;
 		}
 		if (sem_unlock(rcs->sem_id) == -1)
-			goto err_unspawn_player_sem_locked;
+			goto err_unspawn_player;
 	}
 	return 1;
 
-err_no_graphic_mode:
-	sem_unlock(rcs->sem_id);
-	log_err("The graphic process isn't running");
-	return -1;
-
 err_unspawn_player:
-	sem_lock(rcs->sem_id);
-err_unspawn_player_sem_locked:
+	if (!g_is_sem_locked)
+		sem_lock(rcs->sem_id);
 	unspawn_player(m, p);
 	sem_unlock(rcs->sem_id);
-	log_err("Game error");
 	return -1;
 }
 
@@ -311,6 +322,8 @@ int main(int ac, char **av)
 	return 0;
 
 err_clean_all_rcs:
+	if (g_is_sem_locked)
+		sem_unlock(rcs.sem_id);
 	clean_shared_rcs(&rcs, E_CLEAN_ALL);
 	return 1;
 }

@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 17:39:35 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/03 14:23:31 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 18:56:49 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,14 @@
 #include "../include/game_utils.h"
 
 struct mapinfo;
+
+/**
+ * Indicate the state of the system V semaphore allowing access to the memory
+ * segment shared between all the lemipc processes. If true, this process
+ * is locking the semaphore and no other process can access the shared memory
+ * segment until this process unlock it.
+*/
+extern volatile _Bool g_is_sem_locked;
 
 /**
  * enum clean_step - Describes which System V shared ressources needs to be
@@ -77,12 +85,14 @@ struct msgbuf {
 */
 static inline int sem_lock(int sem_id)
 {
-	int ret;
 	struct sembuf b = { .sem_op = -1 };
 
-	if ((ret = semop(sem_id, &b, 1)) == -1)
+	if (semop(sem_id, &b, 1) == -1) {
 		log_syserr("(semop -1)");
-	return ret;
+		return -1;
+	}
+	g_is_sem_locked = 1;
+	return 0;
 }
 
 /**
@@ -96,12 +106,14 @@ static inline int sem_lock(int sem_id)
 */
 static inline int sem_unlock(int sem_id)
 {
-	int ret;
 	struct sembuf b = { .sem_op = 1 };
 
-	if ((ret = semop(sem_id, &b, 1)) == -1)
+	if (semop(sem_id, &b, 1) == -1) {
 		log_syserr("(semop 1)");
-	return ret;
+		return -1;
+	}
+	g_is_sem_locked = 0;
+	return 0;
 }
 
 key_t keygen(int i);

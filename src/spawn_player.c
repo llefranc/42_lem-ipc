@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:27:54 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/13 17:24:59 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 17:49:33 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,12 +121,12 @@ int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 
 	if (get_nb_players_in_team(m, p) + 1 > NB_PLAYERS_MAX) {
 		log_err("Too many players in this team");
-		goto err_unlock_sem;
+		return -1;
 	}
 	p->pos = find_spawn_pos(m);
 	if (p->pos.row == -1) {
 		log_err("No spawn position available");
-		goto err_unlock_sem;
+		return -1;
 	}
 	if (update_player_target(rcs, m, p) == -1)
 		return -1;
@@ -139,8 +139,4 @@ int spawn_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 	printf("[ INFO  ] Player spawned (row %d, col %d)\n", p->pos.row + 1,
 			p->pos.col + 1);
 	return 0;
-
-err_unlock_sem:
-	sem_unlock(rcs->sem_id);
-	return -1;
 }

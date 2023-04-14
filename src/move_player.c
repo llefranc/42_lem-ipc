@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:49:33 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/14 17:20:17 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 19:13:02 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -183,6 +183,8 @@ static inline void update_player_pos(struct mapinfo *m, struct player *p,
 	int move_col = ennemy_pos.col - p->pos.col;
 	void (*fptr_move_player[2])(struct mapinfo *, struct player *) = {};
 
+	printf("[ INFO  ] Player moved (row %d, col %d) => ", p->pos.row + 1,
+	       p->pos.col + 1);
 	if (p->pos.row + move_row < 0 || p->pos.row + move_row >= MAP_NB_ROWS)
 		move_row = 0;
 	if (p->pos.col + move_col < 0 || p->pos.col + move_col >= MAP_NB_COLS)
@@ -207,8 +209,7 @@ static inline void update_player_pos(struct mapinfo *m, struct player *p,
 	} else {
 		random_move(m, p);
 	}
-	printf("[ INFO  ] Player moved (row %d, col %d) => ", p->pos.row + 1,
-	       p->pos.col + 1);
+	printf("(row %d, col %d)\n", p->pos.row + 1, p->pos.col + 1);
 }
 
 int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
@@ -235,7 +236,7 @@ int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 		if (ennemy_pos.row == -1) {
 			log_verb("Finding new target");
 			if (update_player_target(rcs, m, p) == -1)
-				goto err_unlock_sem;
+				return -1;
 
 			ennemy_pos = find_player_pos(m, p->targ_id);
 			if (ennemy_pos.row == -1)
@@ -247,8 +248,4 @@ int move_player(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 		m->game_state = E_STATE_PRINT;
 	}
 	return m->game_state;
-
-err_unlock_sem:
-	sem_unlock(rcs->sem_id);
-	return -1;
 }

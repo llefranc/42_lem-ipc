@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/28 16:06:56 by llefranc          #+#    #+#             */
-/*   Updated: 2023/03/10 14:54:27 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/14 17:46:39 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,7 @@ void print_map(const struct mapinfo *m)
 		printf("\x1B[%dA", MAP_NB_ROWS * 2 + 8);
 		fflush(stdout); /* remove previous map from terminal */
 	}
-	
+
 	printf("\nTurn number: %ld\n", nb_moves++);
 	for (int row = 0; row < MAP_NB_ROWS; ++row) {
 		print_grid_line();
@@ -288,7 +288,10 @@ int nb_players_in_game(const struct mapinfo *m)
 	return nb;
 }
 
-int get_winner(const struct mapinfo *m)
+/**
+ * Return the team id of the team who has at least 2 players still in the game.
+*/
+int get_winner_team_id(const struct mapinfo *m)
 {
 	for (int team_id = 0; team_id < NB_TEAMS_MAX; ++team_id) {
 		if (m->nbp_team[team_id])
