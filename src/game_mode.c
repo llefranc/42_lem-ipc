@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 20:00:25 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/14 20:06:43 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/17 15:13:10 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
 		}
 		if (sem_unlock(rcs->sem_id) == -1)
 			goto err_exit;
-	} while (still_playing > 1 && !g_is_sig_received);
+	} while (still_playing > 1);
 
 	if (display_winner(rcs, m) == -1)
 		goto err_exit;
