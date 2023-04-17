@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:49:33 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/14 19:56:50 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/17 14:55:52 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -199,8 +199,6 @@ static inline void update_player_pos(struct mapinfo *m, struct player *p,
 	if (move_col < 0 && !get_id(m, p->pos.row, p->pos.col - 1))
 		fptr_player_move[i++] = player_move_left;
 
-	// ajouter ici une notion de last move
-
 	if (i == 1) {
 		fptr_player_move[0](m, p);
 	} else if (i == 2) {
@@ -214,7 +212,6 @@ static inline void update_player_pos(struct mapinfo *m, struct player *p,
 
 int player_move(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 {
-	// int ret = E_STATE_PLAY;
 	struct position ennemy_pos;
 	struct timespec time_elapsed;
 	struct timespec now;
@@ -226,11 +223,8 @@ int player_move(const struct shrcs *rcs, struct mapinfo *m, struct player *p)
 	time_elapsed = sub_timespec(now, m->time_last_move);
 	if (m->game_state == E_STATE_WON) {
 		log_info("You won the game!");
-	// } else if (!is_surrounded(m, p) && !is_target_reached(m, p) &&
 	} else if (!is_surrounded(m, p)  &&
 		   time_elapsed.tv_sec >= TIME_BETWEEN_MOVE) {
-
-		// printf("istargetreached=%d\n", is_target_reached(m, p));
 
 		ennemy_pos = find_player_pos(m, p->targ_id);
 		if (ennemy_pos.row == -1) {
