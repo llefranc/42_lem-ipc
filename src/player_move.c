@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/02 15:49:33 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/17 14:55:52 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/17 15:25:51 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,24 +62,6 @@ _Bool is_surrounded(const struct mapinfo *m, const struct player *p)
 			return 0;
 	}
 	return 1;
-}
-
-_Bool is_target_reached(const struct mapinfo *m, const struct player *p)
-{
-	unsigned int (*fptr[4])(const struct mapinfo *, int, int) = {
-		&get_left_id,
-		&get_right_id,
-		&get_up_id,
-		&get_down_id,
-	};
-
-	if (!p->targ_id)
-		return 0;
-	for (size_t i = 0; i < sizeof(fptr) / sizeof(*fptr); ++i) {
-		if (fptr[i](m, p->pos.row, p->pos.col) == p->targ_id)
-			return 1;
-	}
-	return 0;
 }
 
 /**
