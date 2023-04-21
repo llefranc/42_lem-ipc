@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 19:35:11 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/14 19:51:52 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/04/21 16:07:45 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,16 +57,19 @@ static inline int check_nb_players(const struct shrcs *rcs,
 				   const struct mapinfo *m)
 {
 	int maxNbPlayer = 0;
+	int nbTeam = 0;
 
 	if (sem_lock(rcs->sem_id) == -1)
 		return -1;
 	for (int team_nb = 0; team_nb < NB_TEAMS_MAX; ++team_nb) {
 		if (m->nbp_team[team_nb] > maxNbPlayer)
 			maxNbPlayer = m->nbp_team[team_nb];
+		if (m->nbp_team[team_nb] > 0)
+			++nbTeam;
 	}
 	if (sem_unlock(rcs->sem_id) == -1)
 		return -1;
-	if (maxNbPlayer < 2)
+	if (nbTeam < 2 || maxNbPlayer < 2)
 		return -1;
 	return 0;
 }
@@ -112,7 +115,7 @@ int wait_for_players(const struct shrcs *rcs, const struct mapinfo *m)
 		return -1;
 
 	if (check_nb_players(rcs, m) == -1) {
-		log_err("Only teams with one player");
+		log_err("Not enough players");
 		return -1;
 	}
 	log_info("Launching game!");
