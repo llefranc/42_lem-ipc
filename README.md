@@ -13,6 +13,28 @@ lem-ipc is a little game to understand how mutliple processes can communicate be
 
 The game consist of a grid filled with players from different teams (maximum 7 different teams), with each team fighting each other and trying to be the last team standing.
 
+## System V IPC
+
+## Building and running the project
+
+1. Download/Clone this repo
+
+        git clone https://github.com/llefranc/42_lem-ipc
+
+2. `cd` into the root directory and run `make`
+
+        cd 42_lem-ipc
+        make
+
+3. Run several time `lemipc` in different terminals with a team number between 0 and 7.
+
+		# Two players in team 1 vs one player in team 2, and the graphic mode
+		./lemipc 1
+		./lemipc 1
+		./lemipc 2
+		./lemipc 0   # graphic mode
+
+
 ## Modes
 
 		./lemipc [team-number]
@@ -58,65 +80,31 @@ When launching the first instance of `lemipc`, this one will init the shared res
 
 A timer will then be displayed, and oher `lemipc` instances **can joined the game during this time**.  
 
-- ➡️ The game is launched when the timer reaches 0.  
-- ➡️ At this point, no other instances will be able to join the game.
+The game is **launched when the timer reaches 0**. At this point, no other instances will be able to join the game.
 
 > The waiting time is defined with the macroconstant `SEC_START_TIME` in `game_utils.h`. You can change this value to increase or decrease the lobby waiting time.
 
 ## Game rules
 
-- Each instance of a process is a player.
-- 
-- Each player is represented by its team number on the grid.
-- Each player 
-- When two players from the same team surround an ennemy player, this one dies.
-- The game stop when only one team is remaining.
+The game is designed based on the following rules:
 
-- player moove 1 time every second
+- ➡️ Each player is represented by its team number on the grid.
+- ➡️ Each second a player mooves.
+- ➡️ A player can move only on an empty tile.
+- ➡️ A player can move only in 4 directions (up, down, left and right).
+- ➡️ A player can move several times in a row.
+- ➡️ You cannot differentiate players from the same team on the grid.
+- ➡️ All the players of a same team target all together the same ennemy player.
+- ➡️ When two players from the same team surround an ennemy player, this one dies (diagonals works).
+- ➡️ It's mandatory for a player to move when it's its turn, even if it's just next to its target.
+- ➡️ The game stop when only one team is remaining.
 
-- `graphic mode`: 
+## System V mechanics
 
-ft_ping uses a raw socket to send each second an ICMP Echo Request packet with a timestamp in its body.
-It will also display a line of information for each received ICMP packet.
+The three interprocess communication mechanisms of System V are used the following way:
 
-It accepts a simple IPv4 address or hostname as a parameter, and supports both numerical IP addresses and hostnames.
-
-> The program should be run with appropriate permissions, as sending ICMP Echo Request packets may require administrative privileges.
-
-When receiving an ICMP packet, ft_ping will check:
-- If the packet was correctly addressed to this process by checking the PID stored in the ID field of ICMP Echo Request.
-- If it's an error packet or not.
-
-ft_ping will ping the targeted host until `Ctrl+C` is pressed. It will then display statistics about the received ICMP Echo Response packets.
-
-ft_ping supports also the following options :
-- `-h`: provides help information about the usage and command-line options of ft_ping.
-- `-q`: enables quiet output, ft_ping will only display the end statistics.
-- `-v`: enables verbose output and allows viewing the results in case of problems or errors related to the packets.
-
-*Example of error packet (packet filtered) with verbose output*
-
-![Alt text](https://github.com/llefranc/42_ft_ping/blob/main/ft_ping_example2.png)
-
-## System V IPC
-
-## Building and running the project
-
-1. Download/Clone this repo
-
-        git clone https://github.com/llefranc/42_lem-ipc
-
-2. `cd` into the root directory and run `make`
-
-        cd 42_lem-ipc
-        make
-
-3. Run several time `lemipc` in different terminals with a team number between 0 and 7.
-
-		# Two players in team 1 vs one player in team 2, and the graphic mode
-		./lemipc 1
-		./lemipc 1
-		./lemipc 2
-		./lemipc 0   # graphic mode
+- `shared memory segment`: contain the map and game datas.
+- `semaphore sets` : secure the access of the shared memory segment.
+- `message queue` : allow the players of a same team to exchange the ennemy player ID to focus.
 
 [1]: https://github.com/llefranc/42_lem-ipc/blob/main/lem-ipc.en.subject.pdf
