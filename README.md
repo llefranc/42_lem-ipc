@@ -21,6 +21,10 @@ The game consist of a grid filled with players from different teams (maximum 7 d
 
 The mode is determinated based on the team number provided as argument.
 
+During the game, you will have:
+- one `lemipc` instance for the graphic mode.
+- and x `lemipc` instances for x players alive. 
+
 ### Graphic mode
 
 		./lemipc 0
@@ -40,12 +44,26 @@ _graphic mode example_
 
 		./lemipc [1-7]
 
+To launch the player mode, you need to run `lemipc` with **a team number between 1 and 7**.  
+
+The player is automatically mooved on the grid when it's it turn based on a very simple IA.
+
 _player mode example_
 
 ![Alt text](https://github.com/llefranc/42_lem-ipc/blob/main/img/lem-ipc_player_mode_example.png)
 
+## Lobby
 
+When launching the first instance of `lemipc`, this one will init the shared ressources and init a starting time.  
 
+A timer will then be displayed, and oher `lemipc` instances can joined the game during this time.  
+
+The game is launched when the timer reaches 0.  
+At this point, no other instances will be able to join the game.
+
+> The waiting time is defined with the macroconstant `SEC_START_TIME` in `game_utils.h`. You can change this value to increase or decrease the lobby waiting time.
+
+## Game rules
 
 - Each instance of a process is a player.
 - 
@@ -53,14 +71,6 @@ _player mode example_
 - Each player 
 - When two players from the same team surround an ennemy player, this one dies.
 - The game stop when only one team is remaining.
-
-lem-ipc can be launch either in graphic mode, either in the player mode.
-
-## Lobby
-
-./lem-ipc 0
-
-## Game
 
 - player moove 1 time every second
 
