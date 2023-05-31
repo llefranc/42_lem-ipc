@@ -19,18 +19,19 @@ The game consist of a grid filled with players from different teams (maximum 7 d
 
         git clone https://github.com/llefranc/42_lem-ipc
 
-2. `cd` into the root directory and run `make`
+2. `cd` into the root directory and run `make` or `make debug` for additional logs
 
         cd 42_lem-ipc
         make
 
-3. Run several time `lemipc` in different terminals with a team number between 0 and 7.
+3. Run several time `lemipc` in different terminals with a team number between 0 and 7
 
 		# Two players in team 1 vs one player in team 2, and the graphic mode
 		./lemipc 1
 		./lemipc 1
 		./lemipc 2
 		./lemipc 0   # graphic mode
+
 
 
 ## Modes
@@ -76,7 +77,7 @@ _player mode example_
 
 When launching the first instance of `lemipc`, this one will init the shared ressources and init a starting time.  
 
-A timer will then be displayed, and oher `lemipc` instances **can joined the game during this time**.  
+A timer will then be displayed, and other `lemipc` instances **can joined the game during this time**.  
 
 The game is **launched when the timer reaches 0**. At this point, no other instances will be able to join the game.
 
@@ -104,5 +105,7 @@ The three interprocess communication mechanisms of System V are used the followi
 - `shared memory segment`: contain the map and game datas.
 - `semaphore sets` : secure the access of the shared memory segment.
 - `message queue` : allow the players of a same team to exchange the ennemy player ID to focus.
+
+> **The first instance of `lempic` to be launch will init all the System V ressources; the last instance to exit will destroy all the System V ressources.**
 
 [1]: https://github.com/llefranc/42_lem-ipc/blob/main/lem-ipc.en.subject.pdf
