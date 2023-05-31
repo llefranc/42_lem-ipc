@@ -54,7 +54,7 @@ To launch the graphic mode, you need to run `lemipc` with **0 as team number**.
 The graphic mode display the grid with the position of each player, and refreshed the grid each time a player mooves.  
 
 - :warning: Only one instance of the graphic mode can run at any time :warning:
-- :warning: The graphic mode must run during the game, otherwise the game end immediately :warning:  
+- :warning: The graphic mode must run during the game, otherwise the game ends immediately :warning:  
 
 _graphic mode example_
 
