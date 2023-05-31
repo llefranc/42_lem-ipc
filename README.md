@@ -13,8 +13,6 @@ lem-ipc is a little game to understand how mutliple processes can communicate be
 
 The game consist of a grid filled with players from different teams (maximum 7 different teams), with each team fighting each other and trying to be the last team standing.
 
-## System V IPC
-
 ## Building and running the project
 
 1. Download/Clone this repo
