@@ -6,7 +6,7 @@
 /*   By: llefranc <llefranc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 20:00:25 by llefranc          #+#    #+#             */
-/*   Updated: 2023/04/17 15:13:10 by llefranc         ###   ########.fr       */
+/*   Updated: 2023/05/31 16:27:49 by llefranc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,9 +69,10 @@ int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
 	int still_playing = 0;
 
 	log_info("Graphic mode started");
-	if ((join_game(rcs, m, 1) == -1) || (wait_for_players(rcs, m) == -1))
-		goto err_exit;
-	if (init_time_last_move(rcs, m) == -1)
+	if ((join_game(rcs, m, 1) == -1))
+		goto err_exit_too_many_graph_procs;
+	if ((wait_for_players(rcs, m) == -1) || 
+	    init_time_last_move(rcs, m) == -1)
 		goto err_exit;
 
 	do {
@@ -95,6 +96,11 @@ int graphic_mode(const struct shrcs *rcs, struct mapinfo *m)
 	if (display_winner(rcs, m) == -1)
 		goto err_exit;
 	return 0;
+
+err_exit_too_many_graph_procs:
+	if (g_is_sem_locked)
+		sem_unlock(rcs->sem_id);
+	return -1;
 
 err_exit:
 	if (!g_is_sem_locked)
