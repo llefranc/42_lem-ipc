@@ -7,7 +7,7 @@
 
 ## About
 
-lem-ipc is a little game to understand how mutliple processes can communicate between themselves using the UNIX System V IPC.
+lem-ipc is a little game to understand how mutliple processes can communicate between themselves **using the UNIX System V IPC**.
 
 > System V IPC is the name given to three interprocess communication mechanisms that are widely available on UNIX systems: message queues, semaphore, and shared memory.
 
@@ -15,7 +15,25 @@ The game consist of a grid filled with players from different teams (maximum 7 d
 
 ## Modes
 
-lem-ipc can be launch in two different modes : graphic mode or player mode. The mode is determinated based on the team number.
+		./lemipc [team-number]
+
+lem-ipc can be launch in two different modes : **graphic mode or player mode**. The mode is determinated based on the team number provided as argument.
+
+### Graphic mode
+
+		./lemipc 0
+		
+To launch the graphic mode, you need to run `lemipc` with **0 as team number**.  
+
+The graphic mode display the grid with the position of each player, and refreshed the grid each time a player mooves.  
+
+- :warning: Only one instance of the graphic mode can run at any time :warning:
+- :warning: The graphic mode must run during the game, otherwise the game end immediately :warning:  
+
+### Player mode
+
+		./lemipc [1-7]
+
 
 - Each instance of a process is a player.
 - 
@@ -26,11 +44,13 @@ lem-ipc can be launch in two different modes : graphic mode or player mode. The 
 
 lem-ipc can be launch either in graphic mode, either in the player mode.
 
-## Graphic mode
+## Lobby
 
 ./lem-ipc 0
 
-## Player mode
+## Game
+
+- player moove 1 time every second
 
 - `graphic mode`: 
 
@@ -56,6 +76,8 @@ ft_ping supports also the following options :
 
 ![Alt text](https://github.com/llefranc/42_ft_ping/blob/main/ft_ping_example2.png)
 
+## System V IPC
+
 ## Building and running the project
 
 1. Download/Clone this repo
@@ -64,20 +86,15 @@ ft_ping supports also the following options :
 
 2. `cd` into the root directory and run `make`
 
-        cd 42_ft_ping
+        cd 42_lem-ipc
         make
 
-3. Run `ft_ping` with appropriate permissions
+3. Run several time `lemipc` in different terminals with a team number between 0 and 7.
 
-		sudo ./ft_ping 192.168.0.1
-		sudo ./ft_ping localhost
-		sudo ./ft_ping google.com -v
-
-## Sources
-
-- [RFC of ICMP protocol][2]
-- [RFC of IP protocol][3]
+		# Two players in team 1 vs one player in team 2, and the graphic mode
+		./lemipc 1
+		./lemipc 1
+		./lemipc 2
+		./lemipc 0   # graphic mode
 
 [1]: https://github.com/llefranc/42_lem-ipc/blob/main/lem-ipc.en.subject.pdf
-[2]: https://www.rfc-editor.org/rfc/rfc792
-[3]: https://www.rfc-editor.org/rfc/rfc791
