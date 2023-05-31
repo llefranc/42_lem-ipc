@@ -3,7 +3,7 @@
 > This project was coded for Linux. Here is the [subject][1].
 >
 
-![Alt text](https://github.com/llefranc/42_lem-ipc/blob/main/img/lem-ipc_example2.png)
+![Alt text](https://github.com/llefranc/42_lem-ipc/blob/main/img/lem-ipc_example.png)
 
 ## About
 
