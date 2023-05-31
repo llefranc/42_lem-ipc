@@ -1,15 +1,38 @@
-# lem-ipc
+# lem-ipc (@42Paris)
 
-# ft_ping (@42Paris)
-
-> This project was code for Linux. Here is the [subject][1].
+> This project was coded for Linux. Here is the [subject][1].
 >
 
-![Alt text](https://github.com/llefranc/42_lem-ipc/blob/main/lem-ipc_example.png)
+![Alt text](https://github.com/llefranc/42_lem-ipc/blob/main/lem-ipc_example2.png)
 
 ## About
 
-ft_ping is a reimplementation in C of the ping utility based on the ping implementation from inetutils-2.0.
+lem-ipc is a little game to understand how mutliple processes can communicate between themselves using the UNIX System V IPC.
+
+> System V IPC is the name given to three interprocess communication mechanisms that are widely available on UNIX systems: message queues, semaphore, and shared memory.
+
+The game consist of a grid filled with players from different teams (maximum 7 different teams), with each team fighting each other and trying to be the last team standing.
+
+## Modes
+
+lem-ipc can be launch in two different modes : graphic mode or player mode. The mode is determinated based on the team number.
+
+- Each instance of a process is a player.
+- 
+- Each player is represented by its team number on the grid.
+- Each player 
+- When two players from the same team surround an ennemy player, this one dies.
+- The game stop when only one team is remaining.
+
+lem-ipc can be launch either in graphic mode, either in the player mode.
+
+## Graphic mode
+
+./lem-ipc 0
+
+## Player mode
+
+- `graphic mode`: 
 
 ft_ping uses a raw socket to send each second an ICMP Echo Request packet with a timestamp in its body.
 It will also display a line of information for each received ICMP packet.
