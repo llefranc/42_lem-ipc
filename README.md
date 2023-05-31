@@ -17,7 +17,7 @@ The game consist of a grid filled with players from different teams (maximum 7 d
 
 		./lemipc [team-number]
 
-lem-ipc can be launch in two different modes : **graphic mode or player mode**.   
+`lemipc` can be launch in two different modes : **graphic mode or player mode**.   
 
 The mode is determinated based on the team number provided as argument.
 
@@ -35,6 +35,8 @@ The graphic mode display the grid with the position of each player, and refreshe
 ### Player mode
 
 		./lemipc [1-7]
+
+
 
 
 - Each instance of a process is a player.
