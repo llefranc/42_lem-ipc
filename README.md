@@ -3,7 +3,7 @@
 > This project was coded for Linux. Here is the [subject][1].
 >
 
-![Alt text](https://github.com/llefranc/42_lem-ipc/blob/main/lem-ipc_example2.png)
+![Alt text](https://github.com/llefranc/42_lem-ipc/blob/main/img/lem-ipc_example2.png)
 
 ## About
 
@@ -32,9 +32,17 @@ The graphic mode display the grid with the position of each player, and refreshe
 - :warning: Only one instance of the graphic mode can run at any time :warning:
 - :warning: The graphic mode must run during the game, otherwise the game end immediately :warning:  
 
+_graphic mode example_
+
+![Alt text](https://github.com/llefranc/42_lem-ipc/blob/main/img/lem-ipc_graphic_mode_example.png)
+
 ### Player mode
 
 		./lemipc [1-7]
+
+_player mode example_
+
+![Alt text](https://github.com/llefranc/42_lem-ipc/blob/main/img/lem-ipc_player_mode_example.png)
 
 
 
