@@ -56,10 +56,10 @@ _player mode example_
 
 When launching the first instance of `lemipc`, this one will init the shared ressources and init a starting time.  
 
-A timer will then be displayed, and oher `lemipc` instances can joined the game during this time.  
+A timer will then be displayed, and oher `lemipc` instances **can joined the game during this time**.  
 
-The game is launched when the timer reaches 0.  
-At this point, no other instances will be able to join the game.
+- ➡️ The game is launched when the timer reaches 0.  
+- ➡️ At this point, no other instances will be able to join the game.
 
 > The waiting time is defined with the macroconstant `SEC_START_TIME` in `game_utils.h`. You can change this value to increase or decrease the lobby waiting time.
 
